@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Recipes — Soodey.com</title>
+  <meta name="description" content="Clean, tested recipes without the 2,000-word life story. Straight to ingredients, weights, and steps.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,500;0,6..72,600;1,6..72,400&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./recipes.css">
+</head>
+<body>
+  <nav class="site-nav" aria-label="Site navigation">
+    <a class="site-nav__brand" href="./">
+      <span class="site-nav__brand-dot" aria-hidden="true"></span>
+      <span>Soodey’s Kitchen</span>
+    </a>
+    <div class="site-nav__links">
+      <a class="site-nav__link site-nav__link--active" href="./">Recipes</a>
+      <a class="site-nav__link" href="../">soodey.com</a>
+    </div>
+  </nav>
+
+  <main class="page-wrap">
+    <header class="index-hero">
+      <div class="eyebrow">Tested Recipes • Zero Blog Clutter</div>
+      <h1 class="index-hero__title">Recipes</h1>
+      <p class="index-hero__lead">
+        No life stories, no popups, no jump-to-recipe button needed. Just dialed-in weights, clear steps, and kitchen-friendly recipe cards.
+      </p>
+    </header>
+
+    <section class="recipe-grid" aria-label="Recipe collection">
+      <a class="recipe-tile" href="./thanksgiving-mac-and-cheese/">
+        <div class="recipe-tile__media">
+          <img
+            class="recipe-tile__img"
+            src="./thanksgiving-mac-and-cheese/thanksgiving-mac-and-cheese.jpg"
+            alt="Golden broiled cavatappi mac and cheese in a 9x13 ceramic casserole dish"
+            loading="eager"
+          >
+          <span class="recipe-tile__badge">Holiday Side Dish</span>
+        </div>
+        <div class="recipe-tile__body">
+          <h2 class="recipe-tile__title">One-Pot Stovetop Mac &amp; Cheese (Thanksgiving Make-Ahead)</h2>
+          <p class="recipe-tile__desc">
+            Adapted from Brian Lagerstrom’s “Better” stovetop method — scaled for 1 lb cavatappi, freshly grated medium cheddar, and a bubbly broiled Thanksgiving finish.
+          </p>
+          <div class="recipe-tile__meta">
+            <span>Prep: 20m</span>
+            <span>Cook &amp; Bake: 25–30m</span>
+            <span>Serves 8–10</span>
+            <span class="recipe-tile__cta">Open Card →</span>
+          </div>
+        </div>
+      </a>
+    </section>
+  </main>
+</body>
+</html>
