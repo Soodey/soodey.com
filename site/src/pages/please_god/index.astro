@@ -3,26 +3,23 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 ---
 
 <BaseLayout
-  title="Source Tells Me // SOODEY"
-  description="HiDPI Tim Pool tweet meme generator. Type anything, switch dark/light, copy or download crisp PNG."
+  title="Source Tells Me — soodey.com"
+  description="Tim Pool tweet meme generator with light and dark mode and PNG export."
   showNav={true}
   backHref="/gallery/"
   backLabel="Gallery"
-  navSection="Meme Tool"
+  navSection="Source Tells Me"
 >
   <main class="min-h-[calc(100dvh-4rem)] void-grid py-10 px-4 sm:px-6 flex flex-col items-center">
     <div class="w-full max-w-2xl space-y-6 animate-rise">
       <header class="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <div class="font-mono text-[11px] uppercase tracking-[0.2em] text-crimson">EP.01 // MEME GENERATOR</div>
-          <h1 class="font-display font-extrabold text-3xl sm:text-4xl text-bone tracking-tight mt-1">
-            Source Tells Me
-          </h1>
-        </div>
+        <h1 class="font-display font-bold text-3xl sm:text-4xl text-bone tracking-[-0.03em] m-0">
+          Source Tells Me
+        </h1>
         <button
           id="modeToggle"
           type="button"
-          class="px-4 py-2 rounded-full border border-white/15 bg-white/[0.04] hover:border-crimson/60 text-xs font-mono font-semibold text-bone cursor-pointer transition"
+          class="px-4 py-2 rounded-full border border-white/15 bg-white/[0.04] hover:border-white/35 text-xs font-medium text-bone cursor-pointer transition"
         >
           Tweet: Dark Mode
         </button>

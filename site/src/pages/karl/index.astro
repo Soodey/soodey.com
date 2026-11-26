@@ -1,0 +1,270 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="Unspeakable Evil — soodey.com"
+  description="Unspeakable Evil."
+>
+  <main class="relative h-[100dvh] w-full overflow-hidden bg-black select-none">
+    <!-- Fullscreen Procedural Storm + Karl Flash Canvas -->
+    <canvas id="karlCanvas" class="fixed inset-0 w-full h-full block cursor-crosshair"></canvas>
+
+    <!-- Minimal Floating Controls -->
+    <div class="fixed top-5 left-5 right-5 z-20 flex items-center justify-between gap-3 pointer-events-none">
+      <a
+        href="/gallery/"
+        class="pointer-events-auto inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/15 bg-black/55 backdrop-blur-md hover:border-white/40 text-xs font-medium text-bone transition"
+      >
+        <span aria-hidden="true">←</span>
+        <span>Gallery</span>
+      </a>
+
+      <div class="pointer-events-auto flex items-center gap-2">
+        <button
+          id="karlStrikeBtn"
+          type="button"
+          class="px-4 py-2 rounded-full border border-white/15 bg-black/55 backdrop-blur-md hover:border-white/45 text-xs font-medium text-bone cursor-pointer transition"
+        >
+          Strike
+        </button>
+        <button
+          id="karlAudioBtn"
+          type="button"
+          aria-pressed="false"
+          class="px-4 py-2 rounded-full border border-white/15 bg-black/55 backdrop-blur-md hover:border-white/45 text-xs font-medium text-bone cursor-pointer transition"
+        >
+          Sound: Off
+        </button>
+      </div>
+    </div>
+
+    <!-- Real Original Storm Audio -->
+    <audio id="thunderAudio" loop preload="auto">
+      <source src="/karl/thunder2.mp3" type="audio/mpeg" />
+    </audio>
+  </main>
+
+  <script>
+    let cleanupKarl: (() => void) | null = null;
+
+    function initKarl() {
+      if (cleanupKarl) {
+        cleanupKarl();
+        cleanupKarl = null;
+      }
+
+      const canvas = document.getElementById('karlCanvas') as HTMLCanvasElement | null;
+      const audio = document.getElementById('thunderAudio') as HTMLAudioElement | null;
+      const audioBtn = document.getElementById('karlAudioBtn') as HTMLButtonElement | null;
+      const strikeBtn = document.getElementById('karlStrikeBtn') as HTMLButtonElement | null;
+      if (!canvas) return;
+
+      const ctx = canvas.getContext('2d')!;
+      const evilImg = new Image();
+      evilImg.src = '/karl/karl_evil.png';
+
+      let width = window.innerWidth;
+      let height = window.innerHeight;
+      let flash = 0;
+      let karlReveal = 0;
+      let shakeX = 0;
+      let shakeY = 0;
+      let rafId = 0;
+      let audioOn = false;
+
+      interface Drop { x: number; y: number; len: number; spd: number; wind: number; alpha: number; }
+      interface BoltSeg { x1: number; y1: number; x2: number; y2: number; w: number; }
+      interface Bolt { segs: BoltSeg[]; life: number; }
+
+      const drops: Drop[] = [];
+      const bolts: Bolt[] = [];
+
+      function resize() {
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        width = window.innerWidth;
+        height = window.innerHeight;
+        canvas!.width = Math.floor(width * dpr);
+        canvas!.height = Math.floor(height * dpr);
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+        drops.length = 0;
+        const count = Math.min(480, Math.floor((width * height) / 2800));
+        for (let i = 0; i < count; i++) {
+          drops.push({
+            x: Math.random() * width,
+            y: Math.random() * height,
+            len: 14 + Math.random() * 28,
+            spd: 14 + Math.random() * 14,
+            wind: 2.5 + Math.random() * 2,
+            alpha: 0.14 + Math.random() * 0.34,
+          });
+        }
+      }
+
+      function buildBranch(x: number, y: number, targetY: number, w: number, depth: number, out: BoltSeg[]) {
+        let cx = x;
+        let cy = y;
+        while (cy < targetY) {
+          const nx = cx + (Math.random() - 0.48) * (depth === 0 ? 52 : 30);
+          const ny = cy + 16 + Math.random() * 28;
+          out.push({ x1: cx, y1: cy, x2: nx, y2: ny, w });
+          if (depth < 2 && Math.random() < 0.25) {
+            buildBranch(nx, ny, Math.min(targetY, ny + 80 + Math.random() * 140), w * 0.55, depth + 1, out);
+          }
+          cx = nx;
+          cy = ny;
+        }
+      }
+
+      function strike(startX?: number) {
+        const sx = startX ?? (width * 0.15 + Math.random() * width * 0.7);
+        const segs: BoltSeg[] = [];
+        buildBranch(sx, 0, height * (0.68 + Math.random() * 0.3), 3.4, 0, segs);
+        bolts.push({ segs, life: 1 });
+        flash = 0.85;
+        karlReveal = 1.0;
+        shakeX = (Math.random() - 0.5) * 16;
+        shakeY = (Math.random() - 0.5) * 12;
+      }
+
+      function toggleAudio(forceOn?: boolean) {
+        if (!audio || !audioBtn) return;
+        const next = forceOn !== undefined ? forceOn : !audioOn;
+        if (next) {
+          audio.play().then(() => {
+            audioOn = true;
+            audioBtn.setAttribute('aria-pressed', 'true');
+            audioBtn.textContent = 'Sound: On';
+          }).catch(() => {});
+        } else {
+          audio.pause();
+          audioOn = false;
+          audioBtn.setAttribute('aria-pressed', 'false');
+          audioBtn.textContent = 'Sound: Off';
+        }
+      }
+
+      function tick() {
+        if (Math.random() < 0.011) strike();
+
+        ctx.save();
+        ctx.translate(shakeX, shakeY);
+        shakeX *= 0.82;
+        shakeY *= 0.82;
+
+        // Stormy pitch black sky
+        ctx.fillStyle = '#030305';
+        ctx.fillRect(-30, -30, width + 60, height + 60);
+
+        // Karl looming in the dark + flashing intensely during lightning
+        if (evilImg.complete && evilImg.naturalWidth > 0) {
+          const scale = Math.max(width / evilImg.width, height / evilImg.height);
+          const dw = evilImg.width * scale;
+          const dh = evilImg.height * scale;
+          const dx = (width - dw) / 2;
+          const dy = Math.min(0, (height - dh) * 0.25);
+
+          // Eerie constant dim presence + blinding lightning reveal
+          const alpha = Math.min(0.92, 0.05 + karlReveal * 0.78);
+          ctx.save();
+          ctx.globalAlpha = alpha;
+          ctx.filter = `contrast(${115 + karlReveal * 45}%) grayscale(${40 - karlReveal * 25}%)`;
+          ctx.drawImage(evilImg, dx, dy, dw, dh);
+          ctx.restore();
+        }
+
+        // Lightning flash sky illumination
+        if (flash > 0.01) {
+          ctx.fillStyle = `rgba(215, 232, 255, ${(flash * 0.34).toFixed(3)})`;
+          ctx.fillRect(-30, -30, width + 60, height + 60);
+          flash *= 0.85;
+        }
+        karlReveal *= 0.91;
+
+        // Branching lightning bolts
+        for (let i = bolts.length - 1; i >= 0; i--) {
+          const b = bolts[i];
+          ctx.save();
+          ctx.globalAlpha = b.life;
+          ctx.lineCap = 'round';
+          ctx.shadowColor = '#93c5fd';
+          ctx.shadowBlur = 28;
+          for (const s of b.segs) {
+            ctx.strokeStyle = '#60a5fa';
+            ctx.lineWidth = s.w * 2;
+            ctx.beginPath();
+            ctx.moveTo(s.x1, s.y1);
+            ctx.lineTo(s.x2, s.y2);
+            ctx.stroke();
+
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = s.w * 0.7;
+            ctx.beginPath();
+            ctx.moveTo(s.x1, s.y1);
+            ctx.lineTo(s.x2, s.y2);
+            ctx.stroke();
+          }
+          ctx.restore();
+          b.life -= 0.068;
+          if (b.life <= 0) bolts.splice(i, 1);
+        }
+
+        // Heavy rain
+        ctx.strokeStyle = 'rgba(205, 220, 245, 0.32)';
+        ctx.lineWidth = 1.15;
+        ctx.beginPath();
+        for (const d of drops) {
+          ctx.moveTo(d.x, d.y);
+          ctx.lineTo(d.x + d.wind * 2.6, d.y + d.len);
+          d.x += d.wind;
+          d.y += d.spd;
+          if (d.y > height) {
+            d.y = -d.len;
+            d.x = Math.random() * width;
+          }
+          if (d.x > width) d.x -= width;
+        }
+        ctx.stroke();
+
+        // Subtle vignette
+        const vig = ctx.createRadialGradient(width / 2, height / 2, Math.min(width, height) * 0.2, width / 2, height / 2, Math.max(width, height) * 0.75);
+        vig.addColorStop(0, 'rgba(0,0,0,0)');
+        vig.addColorStop(1, 'rgba(0,0,0,0.82)');
+        ctx.fillStyle = vig;
+        ctx.fillRect(0, 0, width, height);
+
+        ctx.restore();
+        rafId = requestAnimationFrame(tick);
+      }
+
+      resize();
+      setTimeout(() => strike(width * 0.55), 350);
+      rafId = requestAnimationFrame(tick);
+
+      const onResize = () => resize();
+      window.addEventListener('resize', onResize);
+
+      canvas.addEventListener('click', (e) => {
+        strike(e.clientX);
+        if (!audioOn) toggleAudio(true);
+      });
+
+      strikeBtn?.addEventListener('click', () => strike());
+      audioBtn?.addEventListener('click', () => toggleAudio());
+
+      cleanupKarl = () => {
+        cancelAnimationFrame(rafId);
+        window.removeEventListener('resize', onResize);
+        audio?.pause();
+      };
+    }
+
+    document.addEventListener('astro:page-load', initKarl);
+    document.addEventListener('astro:before-swap', () => {
+      cleanupKarl?.();
+      cleanupKarl = null;
+    });
+    initKarl();
+  </script>
+</BaseLayout>

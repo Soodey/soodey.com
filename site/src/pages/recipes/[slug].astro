@@ -1,6 +1,7 @@
 ---
 import { getCollection } from 'astro:content';
-import BaseLayout from '../../layouts/BaseLayout.astro';
+import { ClientRouter } from 'astro:transitions';
+import '../../styles/global.css';
 
 export async function getStaticPaths() {
   const recipes = await getCollection('recipes');
@@ -42,117 +43,138 @@ const jsonLd = {
 };
 ---
 
-<BaseLayout
-  title={`${r.title} — SOODEY`}
-  description={r.description}
-  ogType="article"
-  ogSiteName="Soodey's Kitchen"
-  ogImage={`https://soodey.com${r.image.src}`}
-  ogImageAlt={r.image.alt}
-  ogImageWidth={r.image.width}
-  ogImageHeight={r.image.height}
-  jsonLd={jsonLd}
-  showNav={true}
-  backHref="/recipes/"
-  backLabel="All Recipes"
-  navSection="Recipes"
->
-  <Fragment slot="head">
-    <style>
-      .ingredient-item.is-checked .ingredient-label { opacity: 0.45; }
-      .ingredient-item.is-checked .ingredient-main { text-decoration: line-through; text-decoration-color: rgba(255,255,255,0.4); }
-      .step-card.is-done { opacity: 0.5; border-color: rgba(255,255,255,0.06); background: rgba(255,255,255,0.015); }
-      .step-card.is-done .step-num { background: #10b981; border-color: #10b981; color: #05130d; font-size: 0; }
-      .step-card.is-done .step-num::after { content: "✓"; font-size: 0.95rem; font-weight: 800; }
-      .step-card.is-done .step-title { text-decoration: line-through; text-decoration-color: rgba(255,255,255,0.4); }
-      .step-tip { color: #8f8e97; font-style: italic; }
-      .qty-secondary { color: #8f8e97; font-weight: 500; }
+<!DOCTYPE html>
+<html lang="en" style="background-color:#f5efe6; color:#1f1916; color-scheme:light;">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{r.title} — Soodey.com</title>
+  <meta name="description" content={r.description} />
+  <link rel="canonical" href={`https://soodey.com/recipes/${entry.id}/`} />
+  <meta name="theme-color" content="#9e3b1d" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 
-      .unit-btn[aria-pressed="true"] {
-        background: #ff2244;
-        color: #ffffff;
-      }
-      #wakeLockBtn[aria-pressed="true"] {
-        background: rgba(255, 34, 68, 0.16);
-        border-color: #ff2244;
-        color: #ffffff;
-      }
-      #wakeLockBtn[aria-pressed="true"] .wake-dot {
-        background: #ff2244;
-        box-shadow: 0 0 10px #ff2244;
-      }
+  <meta property="og:type" content="article" />
+  <meta property="og:site_name" content="Soodey's Kitchen" />
+  <meta property="og:locale" content="en_US" />
+  <meta property="og:title" content={r.title} />
+  <meta property="og:description" content={r.description} />
+  <meta property="og:url" content={`https://soodey.com/recipes/${entry.id}/`} />
+  <meta property="og:image" content={`https://soodey.com${r.image.src}`} />
+  <meta property="og:image:type" content="image/jpeg" />
+  <meta property="og:image:width" content={String(r.image.width)} />
+  <meta property="og:image:height" content={String(r.image.height)} />
+  <meta property="og:image:alt" content={r.image.alt} />
 
-      @media print {
-        @page { margin: 0.5in; }
-        html, body { background: #ffffff !important; color: #111111 !important; color-scheme: light !important; }
-        .no-print { display: none !important; }
-        .recipe-shell { border: none !important; background: #ffffff !important; box-shadow: none !important; }
-        .print-dark-text, h1, h2, h3, h4, p, li, span, dt, dd { color: #111111 !important; }
-        .print-border { border-color: #cccccc !important; background: #f8f8f8 !important; }
-        .step-card, .ingredient-item { opacity: 1 !important; break-inside: avoid; }
-        .step-card.is-done .step-title, .ingredient-item.is-checked .ingredient-main { text-decoration: none !important; }
-      }
-    </style>
-  </Fragment>
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content={r.title} />
+  <meta name="twitter:description" content={r.description} />
+  <meta name="twitter:image" content={`https://soodey.com${r.image.src}`} />
+  <meta name="twitter:image:alt" content={r.image.alt} />
 
-  <main class="min-h-[calc(100dvh-4rem)] void-grid py-8 sm:py-12 px-4 sm:px-8">
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,500;0,6..72,600;1,6..72,400&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  />
+  <ClientRouter />
+  <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+
+  <style>
+    .ingredient-item.is-checked .ingredient-label { opacity: 0.5; }
+    .ingredient-item.is-checked .ingredient-main { text-decoration: line-through; text-decoration-color: #82766a; }
+    .step-card.is-done { opacity: 0.56; background: #f7f2ea; }
+    .step-card.is-done .step-num { background: #3e6b48; border-color: #3e6b48; color: #fffdf9; font-size: 0; }
+    .step-card.is-done .step-num::after { content: "✓"; font-size: 0.95rem; font-weight: 800; }
+    .step-card.is-done .step-title { text-decoration: line-through; text-decoration-color: #82766a; }
+    .step-tip { color: #5a5047; font-style: italic; }
+    .qty-secondary { color: #5a5047; font-weight: 600; }
+
+    .unit-btn[aria-pressed="true"] {
+      background: #fffdf9;
+      color: #9e3b1d;
+      box-shadow: 0 1px 3px rgba(31, 25, 22, 0.1);
+    }
+    #wakeLockBtn[aria-pressed="true"] {
+      background: #9e3b1d;
+      border-color: #9e3b1d;
+      color: #fffdf9;
+    }
+    #wakeLockBtn[aria-pressed="true"] .wake-dot {
+      background: #ffd166;
+      box-shadow: 0 0 0 3px rgba(255, 209, 102, 0.35);
+    }
+
+    @media print {
+      @page { margin: 0.55in; }
+      html, body { background: #ffffff !important; color: #111111 !important; font-size: 10.5pt; }
+      .no-print { display: none !important; }
+      .recipe-shell { border: none !important; box-shadow: none !important; border-radius: 0 !important; background: #ffffff !important; }
+      .step-card, .ingredient-item { opacity: 1 !important; break-inside: avoid; }
+      .step-card.is-done .step-title, .ingredient-item.is-checked .ingredient-main { text-decoration: none !important; }
+    }
+  </style>
+</head>
+<body class="bg-[#f5efe6] text-[#1f1916] antialiased min-h-screen" style="font-family:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,sans-serif;">
+  <nav class="no-print max-w-[1080px] mx-auto px-5 pt-5 pb-3 flex items-center justify-between gap-4 text-sm" aria-label="Site navigation">
+    <a class="inline-flex items-center gap-2.5 text-[#1f1916] hover:text-[#9e3b1d] transition font-serif text-xl font-semibold tracking-[-0.01em]" href="/recipes/">
+      <span class="w-2 h-2 rounded-full bg-[#9e3b1d] shrink-0" aria-hidden="true"></span>
+      <span>Soodey’s Kitchen</span>
+    </a>
+    <div class="flex items-center gap-5">
+      <a class="text-[#5a5047] hover:text-[#9e3b1d] font-medium transition" href="/recipes/">← All Recipes</a>
+      <a class="text-[#5a5047] hover:text-[#9e3b1d] font-medium transition" href="/gallery/">Gallery</a>
+    </div>
+  </nav>
+
+  <main class="max-w-[1080px] mx-auto px-3 sm:px-5 pt-2 pb-16">
     <article
-      class="recipe-shell max-w-6xl mx-auto rounded-3xl bg-surface border border-white/[0.09] shadow-2xl overflow-hidden animate-rise"
+      class="recipe-shell bg-[#fffdf9] border border-[#e4dacb] rounded-[18px] shadow-[0_1px_2px_rgba(31,25,22,0.04),0_14px_36px_rgba(31,25,22,0.06)] overflow-hidden animate-rise"
       data-recipe-id={entry.id}
     >
       <!-- Header -->
-      <header class="p-6 sm:p-10 border-b border-white/[0.08] space-y-6">
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-          <div class="lg:col-span-7 space-y-4">
-            <div class="font-mono text-[11px] uppercase tracking-[0.2em] text-crimson font-semibold">
-              {r.eyebrow}
-            </div>
-            <h1 class="font-serif text-3xl sm:text-5xl font-semibold leading-[1.08] tracking-[-0.02em] text-bone">
-              {r.title}
-            </h1>
-            <p class="font-serif italic text-base sm:text-lg text-ash leading-relaxed m-0">
-              {r.subtitle}
-            </p>
+      <header class="p-6 sm:p-10 pb-7 border-b border-[#e4dacb] space-y-5">
+        <div>
+          <div class="text-xs font-bold uppercase tracking-[0.11em] text-[#9e3b1d] mb-2.5">
+            {r.eyebrow}
           </div>
-
-          <figure class="lg:col-span-5 m-0 space-y-2">
-            <div class="rounded-2xl overflow-hidden border border-white/12 aspect-[16/10] bg-elevated">
-              <img src={r.image.src} alt={r.image.alt} class="w-full h-full object-cover" />
-            </div>
-            <figcaption class="font-mono text-[11px] text-white/40 leading-snug no-print">
-              {r.image.caption}
-            </figcaption>
-          </figure>
+          <h1 class="font-serif text-3xl sm:text-5xl font-semibold leading-[1.08] tracking-[-0.022em] text-[#1f1916] m-0 mb-3">
+            {r.title}
+          </h1>
+          <p class="font-serif italic text-lg text-[#5a5047] leading-relaxed max-w-[72ch] m-0">
+            {r.subtitle}
+          </p>
         </div>
 
-        <!-- Specs Strip -->
-        <dl class="print-border grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 rounded-2xl bg-white/[0.03] border border-white/[0.08] m-0">
-          <div>
-            <dt class="font-mono text-[10px] uppercase tracking-[0.16em] text-ash">Prep Time</dt>
-            <dd class="text-sm sm:text-base font-bold text-bone mt-0.5 tabular-nums m-0">{r.prepTime}</dd>
+        <!-- Meta Strip -->
+        <dl class="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 sm:px-5 rounded-xl bg-[#f7f2ea] border border-[#e4dacb] m-0">
+          <div class="sm:border-r sm:border-[#e4dacb] sm:pr-3">
+            <dt class="text-[11px] font-bold uppercase tracking-[0.08em] text-[#82766a]">Prep Time</dt>
+            <dd class="text-base font-bold text-[#1f1916] mt-0.5 tabular-nums m-0">{r.prepTime}</dd>
           </div>
-          <div>
-            <dt class="font-mono text-[10px] uppercase tracking-[0.16em] text-ash">Cook &amp; Bake</dt>
-            <dd class="text-sm sm:text-base font-bold text-bone mt-0.5 tabular-nums m-0">{r.cookTime}</dd>
+          <div class="sm:border-r sm:border-[#e4dacb] sm:pr-3">
+            <dt class="text-[11px] font-bold uppercase tracking-[0.08em] text-[#82766a]">Cook &amp; Bake</dt>
+            <dd class="text-base font-bold text-[#1f1916] mt-0.5 tabular-nums m-0">{r.cookTime}</dd>
           </div>
-          <div>
-            <dt class="font-mono text-[10px] uppercase tracking-[0.16em] text-ash">Yield</dt>
-            <dd class="text-sm sm:text-base font-bold text-bone mt-0.5 tabular-nums m-0">{r.yield}</dd>
+          <div class="sm:border-r sm:border-[#e4dacb] sm:pr-3">
+            <dt class="text-[11px] font-bold uppercase tracking-[0.08em] text-[#82766a]">Yield</dt>
+            <dd class="text-base font-bold text-[#1f1916] mt-0.5 tabular-nums m-0">{r.yield}</dd>
           </div>
           {r.bakingDish && (
             <div>
-              <dt class="font-mono text-[10px] uppercase tracking-[0.16em] text-ash">Baking Dish</dt>
-              <dd class="text-sm sm:text-base font-bold text-bone mt-0.5 tabular-nums m-0">{r.bakingDish}</dd>
+              <dt class="text-[11px] font-bold uppercase tracking-[0.08em] text-[#82766a]">Baking Dish</dt>
+              <dd class="text-base font-bold text-[#1f1916] mt-0.5 tabular-nums m-0">{r.bakingDish}</dd>
             </div>
           )}
         </dl>
 
-        <!-- Interactive Toolbar -->
-        <div class="no-print flex flex-wrap items-center justify-between gap-3 pt-1">
-          <div class="inline-flex items-center p-1 rounded-full bg-white/[0.04] border border-white/10" role="group" aria-label="Measurement display units">
-            <button type="button" class="unit-btn px-3.5 py-1.5 rounded-full text-xs font-mono font-semibold text-ash hover:text-bone cursor-pointer transition" data-unit-mode="both" aria-pressed="true">Both (g + US)</button>
-            <button type="button" class="unit-btn px-3.5 py-1.5 rounded-full text-xs font-mono font-semibold text-ash hover:text-bone cursor-pointer transition" data-unit-mode="metric" aria-pressed="false">Metric (g)</button>
-            <button type="button" class="unit-btn px-3.5 py-1.5 rounded-full text-xs font-mono font-semibold text-ash hover:text-bone cursor-pointer transition" data-unit-mode="us" aria-pressed="false">US Volume</button>
+        <!-- Utility Toolbar -->
+        <div class="no-print flex flex-wrap items-center justify-between gap-3">
+          <div class="inline-flex items-center p-[3px] rounded-full bg-[#f7f2ea] border border-[#e4dacb] gap-0.5" role="group" aria-label="Measurement display units">
+            <button type="button" class="unit-btn px-3.5 py-1.5 rounded-full text-xs font-semibold text-[#5a5047] hover:text-[#1f1916] cursor-pointer transition" data-unit-mode="both" aria-pressed="true">Both (g + US)</button>
+            <button type="button" class="unit-btn px-3.5 py-1.5 rounded-full text-xs font-semibold text-[#5a5047] hover:text-[#1f1916] cursor-pointer transition" data-unit-mode="metric" aria-pressed="false">Metric (g)</button>
+            <button type="button" class="unit-btn px-3.5 py-1.5 rounded-full text-xs font-semibold text-[#5a5047] hover:text-[#1f1916] cursor-pointer transition" data-unit-mode="us" aria-pressed="false">US Volume</button>
           </div>
 
           <div class="flex flex-wrap items-center gap-2">
@@ -161,57 +183,54 @@ const jsonLd = {
               id="wakeLockBtn"
               aria-pressed="false"
               title="Prevent your screen from dimming while cooking"
-              class="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/15 bg-white/[0.03] hover:border-crimson/60 text-xs font-mono font-semibold text-bone cursor-pointer transition"
+              class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#fffdf9] border border-[#d3c5b1] hover:border-[#9e3b1d] hover:text-[#9e3b1d] hover:bg-[#f9ece5] text-xs font-semibold text-[#1f1916] cursor-pointer transition"
             >
-              <span class="wake-dot w-2 h-2 rounded-full bg-white/30 transition"></span>
+              <span class="wake-dot w-2 h-2 rounded-full bg-[#d3c5b1] transition"></span>
               <span id="wakeLockLabel">Screen Awake</span>
             </button>
             <button
               type="button"
               id="printBtn"
-              class="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/15 bg-white/[0.03] hover:border-white/40 text-xs font-mono font-semibold text-bone cursor-pointer transition"
+              class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#fffdf9] border border-[#d3c5b1] hover:border-[#9e3b1d] hover:text-[#9e3b1d] hover:bg-[#f9ece5] text-xs font-semibold text-[#1f1916] cursor-pointer transition"
             >
-              <span>Print</span>
+              <span>Print Recipe</span>
             </button>
-          </div>
-        </div>
-
-        <!-- Combined Live Progress Bar -->
-        <div class="no-print space-y-1.5">
-          <div class="flex items-center justify-between font-mono text-[11px] text-ash">
-            <span>COOK PROGRESS</span>
-            <span id="overallProgressLabel" class="text-crimson tabular-nums">0%</span>
-          </div>
-          <div class="h-1.5 w-full rounded-full bg-white/[0.07] overflow-hidden">
-            <div id="overallProgressBar" class="h-full w-0 rounded-full bg-gradient-to-r from-crimson to-amber-hot transition-all duration-300"></div>
           </div>
         </div>
       </header>
 
+      <!-- Hero Photo -->
+      <figure class="m-0 bg-[#e9dfd1] border-b border-[#e4dacb]">
+        <img src={r.image.src} alt={r.image.alt} class="w-full max-h-[490px] object-cover block" />
+        <figcaption class="no-print px-6 sm:px-10 py-2.5 bg-[#f7f2ea] text-xs text-[#82766a]">
+          {r.image.caption}
+        </figcaption>
+      </figure>
+
       <!-- Two-Column Recipe Body -->
-      <div class="grid grid-cols-1 lg:grid-cols-12">
-        <!-- Ingredients Rail -->
-        <aside class="lg:col-span-5 p-6 sm:p-8 lg:border-r border-b lg:border-b-0 border-white/[0.08] lg:sticky lg:top-16 self-start">
-          <div class="flex items-baseline justify-between gap-2 pb-3 mb-4 border-b-2 border-crimson">
-            <h2 class="font-mono text-xs font-bold uppercase tracking-[0.18em] text-crimson m-0">Ingredients</h2>
-            <div class="flex items-center gap-2.5 font-mono text-xs text-ash no-print">
-              <span id="ingredientCounter" class="tabular-nums">0 / {r.ingredients.length}</span>
-              <button type="button" id="resetIngredientsBtn" hidden class="text-crimson underline cursor-pointer bg-transparent border-0 p-0 text-xs font-mono">Reset</button>
+      <div class="grid grid-cols-1 lg:grid-cols-[minmax(290px,370px)_minmax(0,1fr)] items-start">
+        <!-- Ingredients -->
+        <aside class="p-6 sm:p-8 lg:pl-10 lg:border-r border-b lg:border-b-0 border-[#e4dacb] lg:sticky lg:top-4 bg-gradient-to-b from-[#f7f2ea]/50 to-transparent">
+          <div class="flex items-baseline justify-between gap-3 pb-3 mb-4 border-b-2 border-[#9e3b1d]">
+            <h2 class="text-xs font-extrabold uppercase tracking-[0.11em] text-[#9e3b1d] m-0">Ingredients</h2>
+            <div class="no-print inline-flex items-center gap-2 text-xs text-[#82766a] tabular-nums">
+              <span id="ingredientCounter">0 / {r.ingredients.length}</span>
+              <button type="button" id="resetIngredientsBtn" hidden class="text-[#9e3b1d] font-semibold underline bg-transparent border-0 p-0 text-xs cursor-pointer">Reset</button>
             </div>
           </div>
 
-          <ul class="list-none p-0 m-0 divide-y divide-white/[0.07]">
+          <ul class="list-none p-0 m-0 divide-y divide-[#e4dacb]">
             {r.ingredients.map((ing) => (
               <li class="ingredient-item" data-id={ing.id}>
-                <label class="ingredient-label flex items-start gap-3 py-3 px-2 -mx-2 rounded-lg hover:bg-white/[0.03] cursor-pointer select-none transition">
+                <label class="ingredient-label flex items-start gap-3 py-2.5 px-1.5 -mx-1.5 rounded-md hover:bg-[#f7f2ea] cursor-pointer select-none transition">
                   <input
                     type="checkbox"
-                    class="ingredient-checkbox mt-0.5 w-4 h-4 accent-[#ff2244] cursor-pointer shrink-0"
+                    class="ingredient-checkbox mt-0.5 w-4 h-4 accent-[#9e3b1d] cursor-pointer shrink-0"
                   />
                   <span class="flex flex-col gap-0.5 min-w-0">
-                    <span class="ingredient-main text-[15px] leading-snug text-bone">
+                    <span class="ingredient-main text-[0.95rem] leading-snug text-[#1f1916]">
                       <span
-                        class="ingredient-qty font-bold text-white tabular-nums"
+                        class="ingredient-qty font-bold text-[#1f1916] tabular-nums"
                         data-metric={ing.metric}
                         data-us={ing.us}
                         data-both-primary={ing.bothPrimary}
@@ -222,12 +241,12 @@ const jsonLd = {
                       </span>{' '}
                       {ing.name}
                       {ing.dayTag && (
-                        <span class="ml-1.5 px-2 py-0.5 rounded-full bg-crimson/15 border border-crimson/35 font-mono text-[10px] font-bold uppercase tracking-wider text-crimson align-middle">
+                        <span class="ml-1 px-2 py-0.5 rounded-full bg-[#f9ece5] text-[#9e3b1d] text-[10px] font-bold uppercase tracking-wider align-middle">
                           {ing.dayTag}
                         </span>
                       )}
                     </span>
-                    {ing.note && <span class="text-xs italic text-ash">{ing.note}</span>}
+                    {ing.note && <span class="text-xs italic text-[#5a5047]">{ing.note}</span>}
                   </span>
                 </label>
               </li>
@@ -235,40 +254,40 @@ const jsonLd = {
           </ul>
         </aside>
 
-        <!-- Instructions Column -->
-        <section class="lg:col-span-7 p-6 sm:p-8 space-y-10">
-          <div class="flex items-baseline justify-between gap-2 pb-3 border-b-2 border-crimson">
-            <h2 class="font-mono text-xs font-bold uppercase tracking-[0.18em] text-crimson m-0">Instructions</h2>
-            <div class="flex items-center gap-2.5 font-mono text-xs text-ash no-print">
-              <span id="stepCounter" class="tabular-nums">0 / {totalSteps} done</span>
-              <button type="button" id="resetStepsBtn" hidden class="text-crimson underline cursor-pointer bg-transparent border-0 p-0 text-xs font-mono">Reset</button>
+        <!-- Instructions -->
+        <section class="p-6 sm:p-9 lg:pr-10 space-y-8">
+          <div class="flex items-baseline justify-between gap-3 pb-3 border-b-2 border-[#9e3b1d]">
+            <h2 class="text-xs font-extrabold uppercase tracking-[0.11em] text-[#9e3b1d] m-0">Step-by-Step Instructions</h2>
+            <div class="no-print inline-flex items-center gap-2 text-xs text-[#82766a] tabular-nums">
+              <span id="stepCounter">0 / {totalSteps} done</span>
+              <button type="button" id="resetStepsBtn" hidden class="text-[#9e3b1d] font-semibold underline bg-transparent border-0 p-0 text-xs cursor-pointer">Reset</button>
             </div>
           </div>
 
           {r.parts.map((part, pIdx) => (
-            <div class:list={['space-y-4', pIdx > 0 && 'pt-8 border-t border-dashed border-white/15']}>
-              <h3 class="flex flex-wrap items-center gap-3 font-serif text-xl sm:text-2xl font-semibold text-bone m-0">
-                <span class="px-2.5 py-1 rounded-full bg-crimson/15 border border-crimson/35 font-mono text-[11px] font-bold uppercase tracking-wider text-crimson">
+            <div class:list={['space-y-4', pIdx > 0 && 'pt-7 border-t border-dashed border-[#d3c5b1]']}>
+              <h3 class="flex flex-wrap items-center gap-2.5 font-serif text-xl sm:text-2xl font-semibold text-[#1f1916] m-0">
+                <span class="px-2.5 py-0.5 rounded-full bg-[#f9ece5] text-[#9e3b1d] font-sans text-[11px] font-bold uppercase tracking-wider">
                   {part.pill}
                 </span>
                 <span>{part.title}</span>
               </h3>
 
-              <ol class="list-none p-0 m-0 space-y-3">
+              <ol class="list-none p-0 m-0 space-y-3.5">
                 {part.steps.map((step, sIdx) => (
                   <li
-                    class="step-card grid grid-cols-[34px_minmax(0,1fr)] gap-3.5 p-4 sm:p-5 rounded-2xl border border-white/[0.09] bg-white/[0.025] hover:border-white/25 hover:bg-white/[0.04] cursor-pointer transition"
+                    class="step-card grid grid-cols-[34px_minmax(0,1fr)] gap-3.5 p-4 rounded-xl border border-[#e4dacb] bg-[#fffdf9] hover:border-[#d3c5b1] hover:bg-[#fffaf3] cursor-pointer transition"
                     data-step-id={step.id}
                     tabindex="0"
                     role="checkbox"
                     aria-checked="false"
                   >
-                    <div class="step-num w-8 h-8 rounded-full bg-crimson/15 border border-crimson/40 text-crimson flex items-center justify-center font-mono text-xs font-bold shrink-0 transition">
+                    <div class="step-num w-8 h-8 rounded-full bg-[#f9ece5] border border-[#9e3b1d]/25 text-[#9e3b1d] flex items-center justify-center text-sm font-extrabold tabular-nums shrink-0 transition">
                       {sIdx + 1}
                     </div>
-                    <div class="space-y-2">
-                      <h4 class="step-title text-base font-bold text-bone m-0 leading-snug">{step.title}</h4>
-                      <ul class="m-0 pl-4 space-y-1.5 text-sm text-bone/85 leading-relaxed marker:text-crimson">
+                    <div class="space-y-1.5">
+                      <h4 class="step-title text-base font-bold text-[#1f1916] m-0 leading-snug">{step.title}</h4>
+                      <ul class="m-0 pl-4 space-y-1.5 text-[0.95rem] text-[#1f1916] leading-relaxed marker:text-[#9e3b1d]">
                         {step.bullets.map((b) => (
                           <li set:html={b} />
                         ))}
@@ -280,15 +299,15 @@ const jsonLd = {
             </div>
           ))}
 
-          <p class="no-print font-mono text-[11px] text-white/35 m-0">
-            TIP: Tap any step to check it off — progress saves automatically on this device.
+          <p class="no-print text-xs text-[#82766a] m-0">
+            Tip: Tap any step to check it off as you cook — progress saves automatically on this device.
           </p>
         </section>
       </div>
 
-      <footer class="px-6 sm:px-10 py-4 bg-white/[0.02] border-t border-white/[0.08] flex flex-wrap items-center justify-between gap-2 font-mono text-xs text-white/35">
+      <footer class="px-6 sm:px-10 py-4 bg-[#f7f2ea] border-t border-[#e4dacb] flex flex-wrap items-center justify-between gap-2 text-xs text-[#82766a]">
         <span>{r.title}</span>
-        <span>soodey.com/recipes/{entry.id}/</span>
+        <span>soodey.com/recipes</span>
       </footer>
     </article>
   </main>
@@ -320,9 +339,7 @@ const jsonLd = {
       const qtyEls = Array.from(document.querySelectorAll('.ingredient-qty')) as HTMLElement[];
 
       function applyUnitMode(mode: string) {
-        unitBtns.forEach((btn) => {
-          btn.setAttribute('aria-pressed', String(btn.dataset.unitMode === mode));
-        });
+        unitBtns.forEach((btn) => btn.setAttribute('aria-pressed', String(btn.dataset.unitMode === mode)));
         qtyEls.forEach((el) => {
           const metric = el.dataset.metric || '';
           const us = el.dataset.us || '';
@@ -330,15 +347,10 @@ const jsonLd = {
           const bothSecondary = el.dataset.bothSecondary || `(${us})`;
           const inIngredients = Boolean(el.closest('.ingredient-item'));
 
-          if (mode === 'metric') {
-            el.textContent = metric;
-          } else if (mode === 'us') {
-            el.textContent = us;
-          } else if (inIngredients) {
-            el.innerHTML = `${bothPrimary} <span class="qty-secondary">${bothSecondary}</span>`;
-          } else {
-            el.textContent = `${bothPrimary} ${bothSecondary}`;
-          }
+          if (mode === 'metric') el.textContent = metric;
+          else if (mode === 'us') el.textContent = us;
+          else if (inIngredients) el.innerHTML = `${bothPrimary} <span class="qty-secondary">${bothSecondary}</span>`;
+          else el.textContent = `${bothPrimary} ${bothSecondary}`;
         });
         saveState('unitMode', mode);
       }
@@ -350,22 +362,6 @@ const jsonLd = {
       const ingredientCounter = document.getElementById('ingredientCounter');
       const resetIngredientsBtn = document.getElementById('resetIngredientsBtn') as HTMLButtonElement | null;
       const checkedIngredients = new Set<string>(loadState<string[]>('ingredients', []));
-
-      const stepCards = Array.from(document.querySelectorAll('.step-card')) as HTMLElement[];
-      const stepCounter = document.getElementById('stepCounter');
-      const resetStepsBtn = document.getElementById('resetStepsBtn') as HTMLButtonElement | null;
-      const doneSteps = new Set<string>(loadState<string[]>('steps', []));
-
-      const overallBar = document.getElementById('overallProgressBar');
-      const overallLabel = document.getElementById('overallProgressLabel');
-
-      function updateOverall() {
-        const total = ingredientItems.length + stepCards.length;
-        const done = checkedIngredients.size + doneSteps.size;
-        const pct = total ? Math.round((done / total) * 100) : 0;
-        if (overallBar) overallBar.style.width = `${pct}%`;
-        if (overallLabel) overallLabel.textContent = `${pct}%`;
-      }
 
       function renderIngredients() {
         let count = 0;
@@ -379,7 +375,6 @@ const jsonLd = {
         });
         if (ingredientCounter) ingredientCounter.textContent = `${count} / ${ingredientItems.length}`;
         if (resetIngredientsBtn) resetIngredientsBtn.hidden = count === 0;
-        updateOverall();
       }
 
       ingredientItems.forEach((item) => {
@@ -399,6 +394,11 @@ const jsonLd = {
         renderIngredients();
       });
 
+      const stepCards = Array.from(document.querySelectorAll('.step-card')) as HTMLElement[];
+      const stepCounter = document.getElementById('stepCounter');
+      const resetStepsBtn = document.getElementById('resetStepsBtn') as HTMLButtonElement | null;
+      const doneSteps = new Set<string>(loadState<string[]>('steps', []));
+
       function renderSteps() {
         let count = 0;
         stepCards.forEach((step) => {
@@ -410,7 +410,6 @@ const jsonLd = {
         });
         if (stepCounter) stepCounter.textContent = `${count} / ${stepCards.length} done`;
         if (resetStepsBtn) resetStepsBtn.hidden = count === 0;
-        updateOverall();
       }
 
       function toggleStep(step: HTMLElement) {
@@ -497,4 +496,5 @@ const jsonLd = {
     document.addEventListener('astro:page-load', initRecipeCard);
     initRecipeCard();
   </script>
-</BaseLayout>
+</body>
+</html>

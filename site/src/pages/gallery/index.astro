@@ -11,98 +11,105 @@ const counts = {
 ---
 
 <BaseLayout
-  title="Gallery // SOODEY"
-  description="Curated archive of soodey.com tools, toys, jokes, and recipes."
+  title="Gallery — soodey.com"
+  description="Tools, toys, and recipes on soodey.com."
   showNav={true}
   backHref="/"
-  backLabel="Splash"
+  backLabel="Home"
   navSection="Gallery"
 >
   <main class="min-h-[calc(100dvh-4rem)] void-grid">
     <div class="max-w-7xl mx-auto px-5 sm:px-8 pt-10 pb-24 space-y-10">
-      <!-- Header & Filter Bar (a1.gallery clean curated bar) -->
-      <section class="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-8 border-b border-white/[0.08] animate-rise">
-        <div class="space-y-2">
-          <div class="font-mono text-[11px] uppercase tracking-[0.24em] text-crimson flex items-center gap-2">
-            <span class="w-1.5 h-1.5 rounded-full bg-crimson"></span>
-            <span>Curated Index · {counts.all} Entries</span>
-          </div>
-          <h1 class="font-display font-extrabold text-4xl sm:text-6xl tracking-[-0.03em] text-bone leading-none">
-            THE GALLERY
-          </h1>
-        </div>
+      <!-- Clean a1.gallery-style Header & Filter Bar -->
+      <section class="flex flex-col sm:flex-row sm:items-end justify-between gap-6 pb-8 border-b border-white/[0.08] animate-rise">
+        <h1 class="font-display font-bold text-4xl sm:text-5xl tracking-[-0.035em] text-bone leading-none m-0">
+          Gallery
+        </h1>
 
-        <!-- Filter Pills -->
         <div class="flex flex-wrap items-center gap-2" role="tablist" aria-label="Filter gallery">
           <button
             type="button"
             role="tab"
             aria-selected="true"
             data-filter="all"
-            class="filter-pill px-4 py-2 rounded-full border text-xs font-mono uppercase tracking-[0.14em] cursor-pointer transition bg-bone text-void border-bone font-semibold"
+            class="filter-pill px-4 py-1.5 rounded-full border text-xs font-medium cursor-pointer transition bg-bone text-void border-bone"
           >
-            All <span class="opacity-60 ml-1">{counts.all}</span>
+            All <span class="opacity-55 ml-1 font-mono">{counts.all}</span>
           </button>
           <button
             type="button"
             role="tab"
             aria-selected="false"
             data-filter="tools"
-            class="filter-pill px-4 py-2 rounded-full border text-xs font-mono uppercase tracking-[0.14em] cursor-pointer transition bg-white/[0.03] text-ash border-white/12 hover:border-white/30 hover:text-bone"
+            class="filter-pill px-4 py-1.5 rounded-full border text-xs font-medium cursor-pointer transition bg-white/[0.03] text-ash border-white/12 hover:border-white/30 hover:text-bone"
           >
-            Tools <span class="opacity-60 ml-1">{counts.tools}</span>
+            Tools <span class="opacity-55 ml-1 font-mono">{counts.tools}</span>
           </button>
           <button
             type="button"
             role="tab"
             aria-selected="false"
             data-filter="toys"
-            class="filter-pill px-4 py-2 rounded-full border text-xs font-mono uppercase tracking-[0.14em] cursor-pointer transition bg-white/[0.03] text-ash border-white/12 hover:border-white/30 hover:text-bone"
+            class="filter-pill px-4 py-1.5 rounded-full border text-xs font-medium cursor-pointer transition bg-white/[0.03] text-ash border-white/12 hover:border-white/30 hover:text-bone"
           >
-            Toys &amp; Jokes <span class="opacity-60 ml-1">{counts.toys}</span>
+            Toys <span class="opacity-55 ml-1 font-mono">{counts.toys}</span>
           </button>
           <button
             type="button"
             role="tab"
             aria-selected="false"
             data-filter="kitchen"
-            class="filter-pill px-4 py-2 rounded-full border text-xs font-mono uppercase tracking-[0.14em] cursor-pointer transition bg-white/[0.03] text-ash border-white/12 hover:border-white/30 hover:text-bone"
+            class="filter-pill px-4 py-1.5 rounded-full border text-xs font-medium cursor-pointer transition bg-white/[0.03] text-ash border-white/12 hover:border-white/30 hover:text-bone"
           >
-            Kitchen <span class="opacity-60 ml-1">{counts.kitchen}</span>
+            Kitchen <span class="opacity-55 ml-1 font-mono">{counts.kitchen}</span>
           </button>
         </div>
       </section>
 
-      <!-- Curated Grid -->
+      <!-- Curated Visual Grid -->
       <section
         id="galleryGrid"
         class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
-        aria-label="Gallery entries"
+        aria-label="Gallery items"
       >
         {GALLERY_ITEMS.map((item, idx) => (
           <a
             href={item.href}
             data-category={item.category}
-            class="gallery-item kinetic-card group flex flex-col rounded-2xl bg-surface border border-white/[0.09] animate-rise"
-            style={`animation-delay: ${idx * 65}ms;`}
+            class="gallery-item kinetic-card group flex flex-col rounded-2xl bg-surface border border-white/[0.08] animate-rise"
+            style={`animation-delay: ${idx * 55}ms;`}
           >
-            <!-- Visual Preview Stage (16:10 a1.gallery aspect ratio) -->
-            <div class="relative aspect-[16/10] w-full overflow-hidden bg-[#09090c] border-b border-white/[0.07]">
+            <!-- 16:10 Visual Preview Stage -->
+            <div class="relative aspect-[16/10] w-full overflow-hidden bg-[#0a0a0e] border-b border-white/[0.07]">
               {item.preview === 'kitchen' && item.image && (
                 <>
                   <img
                     src={item.image}
                     alt={item.title}
-                    class="w-full h-full object-cover transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.06]"
+                    class="w-full h-full object-cover transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.05]"
                     loading="eager"
                   />
-                  <div class="absolute inset-0 bg-gradient-to-t from-black/75 via-black/15 to-transparent"></div>
+                  <div class="absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-transparent"></div>
                 </>
               )}
 
+              {item.preview === 'baby' && (
+                <div class="w-full h-full p-6 flex flex-col items-center justify-center gap-2.5 bg-[radial-gradient(circle_at_50%_20%,rgba(56,189,248,0.16),rgba(244,63,94,0.1),transparent_72%),#0b0c10] text-center">
+                  <div class="text-[11px] font-mono uppercase tracking-[0.18em] text-ash">US SSA Weighted</div>
+                  <div class="font-display font-bold text-2xl sm:text-3xl text-bone tracking-tight transition-transform duration-500 group-hover:scale-105">
+                    Oliver James
+                  </div>
+                  <div class="flex items-center gap-1.5 pt-0.5">
+                    <span class="px-2.5 py-0.5 rounded-full bg-white/[0.07] text-[11px] text-ash">Boy</span>
+                    <span class="px-2.5 py-0.5 rounded-full bg-white/[0.07] text-[11px] text-ash">Girl</span>
+                    <span class="px-2.5 py-0.5 rounded-full bg-white/[0.07] text-[11px] text-ash">Unisex</span>
+                  </div>
+                </div>
+              )}
+
               {item.preview === 'meme' && (
-                <div class="w-full h-full p-5 flex items-center justify-center bg-[radial-gradient(circle_at_75%_20%,rgba(29,161,242,0.18),transparent_55%),#0b0f14]">
-                  <div class="w-full max-w-[290px] rounded-xl bg-[#15202b] border border-white/12 p-3.5 shadow-2xl transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.04] group-hover:-rotate-[0.8deg]">
+                <div class="w-full h-full p-5 flex items-center justify-center bg-[radial-gradient(circle_at_75%_20%,rgba(29,161,242,0.16),transparent_55%),#0b0f14]">
+                  <div class="w-full max-w-[290px] rounded-xl bg-[#15202b] border border-white/12 p-3.5 shadow-2xl transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.04]">
                     <div class="flex items-center gap-2.5 mb-2">
                       <img src="/please_god/tim-pool-pfp.jpg" alt="" class="w-8 h-8 rounded-full object-cover border border-white/15" />
                       <div class="leading-tight">
@@ -114,40 +121,36 @@ const counts = {
                       </div>
                     </div>
                     <p class="text-xs text-white/95 leading-snug font-sans m-0">
-                      Source tells me <span class="text-[#1da1f2]">[anything]</span>.<br /><br />Please god
+                      Source tells me <span class="text-[#1da1f2]">Charlie is stable</span>.<br /><br />Please god
                     </p>
                   </div>
                 </div>
               )}
 
               {item.preview === 'dvd' && (
-                <div class="relative w-full h-full bg-[#07070a] overflow-hidden">
-                  <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,34,68,0.09),transparent_70%)]"></div>
-                  <div class="mini-dvd absolute px-3.5 py-1.5 rounded-md border-2 border-crimson text-crimson font-display font-extrabold text-lg tracking-wider shadow-[0_0_24px_rgba(255,34,68,0.4)]">
+                <div class="relative w-full h-full bg-[#08080b] overflow-hidden">
+                  <div class="mini-dvd absolute px-3.5 py-1 rounded-md border-2 border-crimson text-crimson font-display font-bold text-lg tracking-wider shadow-[0_0_24px_rgba(239,59,78,0.35)]">
                     DVD
-                  </div>
-                  <div class="absolute bottom-3 left-3 font-mono text-[10px] text-white/40 tracking-widest">
-                    CORNER HITS // LIVE PHYSICS
                   </div>
                 </div>
               )}
 
               {item.preview === 'clock' && (
-                <div class="w-full h-full flex items-center justify-center bg-[radial-gradient(circle_at_50%_50%,rgba(255,34,68,0.1),transparent_68%),#08080b]">
+                <div class="w-full h-full flex items-center justify-center bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.05),transparent_68%),#09090d]">
                   <svg viewBox="0 0 120 120" class="w-32 h-32 transition-transform duration-500 group-hover:scale-105" aria-hidden="true">
-                    <circle cx="60" cy="60" r="52" fill="#0d0d11" stroke="rgba(255,255,255,0.16)" stroke-width="1.5" />
-                    <circle cx="60" cy="60" r="46" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="1" stroke-dasharray="2 10.05" />
-                    <line id="miniHour" x1="60" y1="60" x2="60" y2="33" stroke="#f4f3ef" stroke-width="3.2" stroke-linecap="round" />
-                    <line id="miniMin" x1="60" y1="60" x2="60" y2="22" stroke="#f4f3ef" stroke-width="2" stroke-linecap="round" />
-                    <line id="miniSec" x1="60" y1="68" x2="60" y2="18" stroke="#ff2244" stroke-width="1.4" stroke-linecap="round" />
-                    <circle cx="60" cy="60" r="3.2" fill="#ff2244" />
+                    <circle cx="60" cy="60" r="52" fill="#0e0e12" stroke="rgba(255,255,255,0.16)" stroke-width="1.5" />
+                    <circle cx="60" cy="60" r="46" fill="none" stroke="rgba(255,255,255,0.09)" stroke-width="1" stroke-dasharray="2 10.05" />
+                    <line id="miniHour" x1="60" y1="60" x2="60" y2="33" stroke="#f5f5f7" stroke-width="3.2" stroke-linecap="round" />
+                    <line id="miniMin" x1="60" y1="60" x2="60" y2="22" stroke="#f5f5f7" stroke-width="2" stroke-linecap="round" />
+                    <line id="miniSec" x1="60" y1="68" x2="60" y2="18" stroke="#ef3b4e" stroke-width="1.4" stroke-linecap="round" />
+                    <circle cx="60" cy="60" r="3" fill="#ef3b4e" />
                   </svg>
                 </div>
               )}
 
               {item.preview === 'ascii' && (
-                <div class="w-full h-full p-4 flex items-center justify-center bg-[#060807] overflow-hidden">
-                  <pre class="font-mono text-[8.5px] leading-[1.08] text-crimson/80 group-hover:text-crimson transition-colors select-none m-0">{`       ..::::::..
+                <div class="w-full h-full p-4 flex items-center justify-center bg-[#07090b] overflow-hidden">
+                  <pre class="font-mono text-[8.5px] leading-[1.08] text-bone/70 group-hover:text-bone transition-colors select-none m-0">{`       ..::::::..
     .:++========++:.
   .:+==++******++==+:.
  .==+*#%%@@@@@@%%#*+==.
@@ -160,72 +163,43 @@ const counts = {
                 </div>
               )}
 
-              {item.preview === 'hero' && (
-                <div class="w-full h-full p-5 flex flex-col items-center justify-center gap-2 bg-[radial-gradient(circle_at_50%_30%,rgba(255,34,68,0.22),rgba(124,58,237,0.14),transparent_72%),#09090d] text-center">
-                  <div class="font-mono text-[10px] tracking-[0.25em] uppercase text-crimson">ROULETTE ENGINE</div>
-                  <div class="font-display font-extrabold text-xl sm:text-2xl text-bone tracking-tight transition-transform duration-500 group-hover:scale-105">
-                    "Lord of Avernus"
-                  </div>
-                  <div class="flex items-center gap-1.5 pt-1">
-                    <span class="px-2 py-0.5 rounded-full bg-white/8 text-[10px] font-mono text-ash">SSA Weighted</span>
-                    <span class="px-2 py-0.5 rounded-full bg-crimson/20 text-[10px] font-mono text-crimson">Dota Lore</span>
-                    <span class="px-2 py-0.5 rounded-full bg-white/8 text-[10px] font-mono text-ash">Chaos</span>
-                  </div>
-                </div>
-              )}
-
               {item.preview === 'storm' && (
-                <div class="relative w-full h-full flex items-center justify-center bg-[radial-gradient(circle_at_60%_20%,rgba(255,34,68,0.28),transparent_58%),#050508] overflow-hidden">
-                  <svg viewBox="0 0 220 140" class="w-full h-full" aria-hidden="true">
-                    <path d="M132 0 L114 48 L128 52 L102 104 L112 106 L94 140" fill="none" stroke="#ff2244" stroke-width="3.5" stroke-linecap="round" opacity="0.9" />
-                    <path d="M132 0 L114 48 L128 52 L102 104 L112 106 L94 140" fill="none" stroke="#fff1f2" stroke-width="1.3" stroke-linecap="round" />
-                    <path d="M114 48 L88 76 M102 104 L132 126" fill="none" stroke="#ff2244" stroke-width="1.5" opacity="0.7" />
+                <div class="relative w-full h-full flex items-center justify-center bg-[#040508] overflow-hidden">
+                  {item.image && (
+                    <img
+                      src={item.image}
+                      alt=""
+                      class="absolute inset-0 w-full h-full object-cover object-top opacity-35 group-hover:opacity-60 grayscale contrast-125 transition duration-500"
+                    />
+                  )}
+                  <svg viewBox="0 0 220 140" class="relative z-10 w-full h-full" aria-hidden="true">
+                    <path d="M132 0 L114 48 L128 52 L102 104 L112 106 L94 140" fill="none" stroke="#60a5fa" stroke-width="3.5" stroke-linecap="round" opacity="0.85" />
+                    <path d="M132 0 L114 48 L128 52 L102 104 L112 106 L94 140" fill="none" stroke="#f0f9ff" stroke-width="1.2" stroke-linecap="round" />
+                    <path d="M114 48 L88 76 M102 104 L132 126" fill="none" stroke="#60a5fa" stroke-width="1.4" opacity="0.65" />
                   </svg>
-                  <span class="absolute bottom-3 left-3 font-mono text-[10px] tracking-[0.22em] text-white/50">UNSPEAKABLE EVIL</span>
                 </div>
               )}
-
-              <!-- Top Episode & Year Overlay Badges -->
-              <div class="absolute top-3 left-3 right-3 flex items-center justify-between pointer-events-none z-10">
-                <span class="px-2.5 py-1 rounded-md bg-black/75 backdrop-blur-md border border-white/12 font-mono text-[10px] font-bold tracking-[0.18em] text-bone">
-                  EP.{item.episode}
-                </span>
-                <span class="px-2.5 py-1 rounded-md bg-black/75 backdrop-blur-md border border-white/12 font-mono text-[10px] tracking-[0.12em] text-ash">
-                  {item.categoryLabel}
-                </span>
-              </div>
             </div>
 
-            <!-- Card Metadata Body -->
-            <div class="relative z-[3] p-5 flex-1 flex flex-col justify-between gap-4">
+            <!-- Card Metadata -->
+            <div class="relative z-[3] p-5 flex-1 flex flex-col justify-between gap-3">
               <div class="space-y-1.5">
                 <div class="flex items-center justify-between gap-3">
-                  <h2 class="font-display font-bold text-xl tracking-tight text-bone group-hover:text-white transition">
+                  <h2 class="font-display font-semibold text-lg tracking-[-0.015em] text-bone group-hover:text-white transition m-0">
                     {item.title}
                   </h2>
-                  <span class="inline-flex items-center justify-center w-7 h-7 rounded-full border border-white/12 text-xs text-ash group-hover:border-crimson group-hover:bg-crimson group-hover:text-white transition-all duration-300 shrink-0">
-                    ↗
+                  <span class="px-2.5 py-0.5 rounded-full bg-white/[0.05] border border-white/10 text-[11px] text-ash shrink-0">
+                    {item.categoryLabel}
                   </span>
                 </div>
                 <p class="text-sm text-ash leading-relaxed m-0">
                   {item.subtitle}
                 </p>
               </div>
-
-              <div class="flex items-center justify-between pt-3.5 border-t border-white/[0.07] font-mono text-[11px] text-white/40">
-                <span>{item.tag}</span>
-                <span>{item.year}</span>
-              </div>
             </div>
           </a>
         ))}
       </section>
-
-      <!-- Quiet Footer -->
-      <footer class="pt-8 border-t border-white/[0.07] flex flex-wrap items-center justify-between gap-4 font-mono text-xs text-white/35">
-        <span>SOODEY.COM // ASTRO + TAILWIND V4</span>
-        <span>MORE COMING WHENEVER A DUMB IDEA STRIKES</span>
-      </footer>
     </div>
   </main>
 
@@ -248,8 +222,8 @@ const counts = {
             const active = p === pill;
             p.setAttribute('aria-selected', String(active));
             p.className = active
-              ? 'filter-pill px-4 py-2 rounded-full border text-xs font-mono uppercase tracking-[0.14em] cursor-pointer transition bg-bone text-void border-bone font-semibold'
-              : 'filter-pill px-4 py-2 rounded-full border text-xs font-mono uppercase tracking-[0.14em] cursor-pointer transition bg-white/[0.03] text-ash border-white/12 hover:border-white/30 hover:text-bone';
+              ? 'filter-pill px-4 py-1.5 rounded-full border text-xs font-medium cursor-pointer transition bg-bone text-void border-bone'
+              : 'filter-pill px-4 py-1.5 rounded-full border text-xs font-medium cursor-pointer transition bg-white/[0.03] text-ash border-white/12 hover:border-white/30 hover:text-bone';
           });
 
           items.forEach((card) => {
@@ -259,13 +233,12 @@ const counts = {
         });
       });
 
-      // Live mini animations for the DVD & Clock preview cards
       const miniDvd = document.querySelector('.mini-dvd') as HTMLElement | null;
       const miniHour = document.getElementById('miniHour');
       const miniMin = document.getElementById('miniMin');
       const miniSec = document.getElementById('miniSec');
 
-      const colors = ['#ff2244', '#22d3ee', '#f59e0b', '#a855f7', '#10b981'];
+      const colors = ['#ef3b4e', '#38bdf8', '#f59e0b', '#a855f7', '#10b981'];
       let colorIdx = 0;
       let dx = 1.15;
       let dy = 0.85;
@@ -283,14 +256,14 @@ const counts = {
           x += dx;
           y += dy;
           let hit = false;
-          if (x <= 8 || x + cw >= pw - 8) {
+          if (x <= 10 || x + cw >= pw - 10) {
             dx = -dx;
-            x = Math.max(8, Math.min(pw - cw - 8, x));
+            x = Math.max(10, Math.min(pw - cw - 10, x));
             hit = true;
           }
-          if (y <= 34 || y + ch >= ph - 26) {
+          if (y <= 10 || y + ch >= ph - 10) {
             dy = -dy;
-            y = Math.max(34, Math.min(ph - ch - 26, y));
+            y = Math.max(10, Math.min(ph - ch - 10, y));
             hit = true;
           }
           if (hit) {
@@ -298,7 +271,7 @@ const counts = {
             const c = colors[colorIdx];
             miniDvd.style.borderColor = c;
             miniDvd.style.color = c;
-            miniDvd.style.boxShadow = `0 0 24px ${c}66`;
+            miniDvd.style.boxShadow = `0 0 24px ${c}55`;
           }
           miniDvd.style.transform = `translate3d(${x}px, ${y}px, 0)`;
         }
@@ -325,10 +298,8 @@ const counts = {
 
     document.addEventListener('astro:page-load', initGallery);
     document.addEventListener('astro:before-swap', () => {
-      if (galleryCleanup) {
-        galleryCleanup();
-        galleryCleanup = null;
-      }
+      galleryCleanup?.();
+      galleryCleanup = null;
     });
     initGallery();
   </script>

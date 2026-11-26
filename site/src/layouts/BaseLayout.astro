@@ -51,7 +51,7 @@ const canonicalUrl = canonical ?? new URL(Astro.url.pathname, Astro.site ?? 'htt
   <title>{title}</title>
   <meta name="description" content={description} />
   <link rel="canonical" href={canonicalUrl} />
-  <meta name="theme-color" content="#060607" />
+  <meta name="theme-color" content="#070709" />
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   {noindex && <meta name="robots" content="noindex, nofollow" />}
 
@@ -74,11 +74,11 @@ const canonicalUrl = canonical ?? new URL(Astro.url.pathname, Astro.site ?? 'htt
   {ogImage && <meta name="twitter:image" content={ogImage} />}
   {ogImage && ogImageAlt && <meta name="twitter:image:alt" content={ogImageAlt} />}
 
-  <!-- Fonts -->
+  <!-- Clean modern typography -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
-    href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,500;0,6..72,600;1,6..72,400&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Syne:wght@700;800&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,500;0,6..72,600;1,6..72,400&family=Space+Grotesk:wght@500;600;700&display=swap"
     rel="stylesheet"
   />
 
@@ -90,21 +90,20 @@ const canonicalUrl = canonical ?? new URL(Astro.url.pathname, Astro.site ?? 'htt
 
   <slot name="head" />
 </head>
-<body class:list={['bg-void text-bone antialiased selection:bg-crimson/35', bodyClass]}>
+<body class:list={['bg-void text-bone antialiased', bodyClass]}>
   <div class="film-grain no-print" aria-hidden="true"></div>
 
   {showNav && (
-    <header class="sticky top-0 z-30 border-b border-white/[0.08] bg-void/80 backdrop-blur-xl no-print">
+    <header class="sticky top-0 z-30 border-b border-white/[0.07] bg-void/80 backdrop-blur-xl no-print">
       <div class="max-w-7xl mx-auto px-5 sm:px-8 h-16 flex items-center justify-between gap-4">
-        <div class="flex items-center gap-4 min-w-0">
-          <a href="/" class="group inline-flex items-center gap-2.5 text-bone hover:text-white transition">
-            <span class="w-2.5 h-2.5 rounded-full bg-crimson shadow-[0_0_12px_#ff2244] group-hover:scale-125 transition-transform"></span>
-            <span class="font-display font-extrabold tracking-[0.14em] text-sm uppercase">SOODEY</span>
+        <div class="flex items-center gap-3 min-w-0">
+          <a href="/" class="inline-flex items-center gap-2 text-bone hover:text-white transition">
+            <span class="font-display font-bold tracking-[-0.02em] text-base">soodey</span>
           </a>
           {navSection && (
             <>
-              <span class="text-white/20 font-mono text-xs">/</span>
-              <span class="font-mono text-xs uppercase tracking-[0.14em] text-ash truncate">{navSection}</span>
+              <span class="text-white/20 text-sm">/</span>
+              <span class="text-sm text-ash truncate">{navSection}</span>
             </>
           )}
         </div>
@@ -112,7 +111,7 @@ const canonicalUrl = canonical ?? new URL(Astro.url.pathname, Astro.site ?? 'htt
         <nav class="flex items-center gap-2" aria-label="Site navigation">
           <a
             href={backHref}
-            class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-white/12 bg-white/[0.03] hover:border-crimson/60 hover:bg-crimson/10 text-xs font-mono uppercase tracking-wider text-bone transition"
+            class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-white/12 bg-white/[0.03] hover:border-white/30 hover:bg-white/[0.07] text-xs font-medium text-bone transition"
           >
             <span aria-hidden="true">←</span>
             <span>{backLabel}</span>

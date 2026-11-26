@@ -1,6 +1,7 @@
 ---
 import { getCollection } from 'astro:content';
-import BaseLayout from '../../layouts/BaseLayout.astro';
+import { ClientRouter } from 'astro:transitions';
+import '../../styles/global.css';
 
 const recipes = (await getCollection('recipes')).sort((a, b) =>
   b.data.datePublished.localeCompare(a.data.datePublished)
@@ -8,79 +9,104 @@ const recipes = (await getCollection('recipes')).sort((a, b) =>
 const leadImage = recipes[0]?.data.image;
 ---
 
-<BaseLayout
-  title="Recipes // SOODEY"
-  description="Clean, tested recipes without the 2,000-word life story. Straight to ingredients, weights, and steps."
-  ogSiteName="Soodey's Kitchen"
-  ogImage={leadImage ? `https://soodey.com${leadImage.src}` : undefined}
-  ogImageAlt={leadImage?.alt}
-  ogImageWidth={leadImage?.width}
-  ogImageHeight={leadImage?.height}
-  showNav={true}
-  backHref="/gallery/"
-  backLabel="Gallery"
-  navSection="Recipes"
->
-  <main class="min-h-[calc(100dvh-4rem)] void-grid">
-    <div class="max-w-7xl mx-auto px-5 sm:px-8 pt-10 pb-24 space-y-10">
-      <header class="pb-8 border-b border-white/[0.08] flex flex-col sm:flex-row sm:items-end justify-between gap-4 animate-rise">
-        <div class="space-y-2">
-          <div class="font-mono text-[11px] uppercase tracking-[0.22em] text-crimson flex items-center gap-2">
-            <span class="w-1.5 h-1.5 rounded-full bg-crimson"></span>
-            <span>Zero Life Stories · Gram Weights · Cook Mode</span>
-          </div>
-          <h1 class="font-display font-extrabold text-4xl sm:text-6xl tracking-[-0.03em] text-bone leading-none">
-            RECIPES
-          </h1>
-        </div>
-        <p class="text-sm text-ash max-w-md m-0">
-          No popups, no jump-to-recipe button needed. Dialed-in weights, checkable steps, and screen wake lock.
-        </p>
-      </header>
+<!DOCTYPE html>
+<html lang="en" style="background-color:#f5efe6; color:#1f1916; color-scheme:light;">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Recipes — Soodey.com</title>
+  <meta name="description" content="Clean, tested recipes without the 2,000-word life story. Straight to ingredients, weights, and steps." />
+  <link rel="canonical" href="https://soodey.com/recipes/" />
+  <meta name="theme-color" content="#9e3b1d" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 
-      <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" aria-label="Recipe collection">
-        {recipes.map((entry, idx) => {
-          const r = entry.data;
-          return (
-            <a
-              href={`/recipes/${entry.id}/`}
-              class="kinetic-card group flex flex-col rounded-2xl bg-surface border border-white/[0.09] animate-rise"
-              style={`animation-delay: ${idx * 70}ms;`}
-            >
-              <div class="relative aspect-[16/10] overflow-hidden bg-elevated border-b border-white/[0.07]">
-                <img
-                  src={r.image.src}
-                  alt={r.image.alt}
-                  class="w-full h-full object-cover transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.05]"
-                  loading="eager"
-                />
-                <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent"></div>
-                <span class="absolute top-3 left-3 px-2.5 py-1 rounded-md bg-black/75 backdrop-blur-md border border-white/15 font-mono text-[10px] uppercase tracking-[0.14em] text-crimson font-semibold">
-                  {r.category}
-                </span>
-              </div>
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Soodey's Kitchen" />
+  <meta property="og:locale" content="en_US" />
+  <meta property="og:title" content="Soodey's Kitchen — Recipes Without the Clutter" />
+  <meta property="og:description" content="Clean, tested recipes without the 2,000-word life story. Straight to ingredients, weights, and steps." />
+  <meta property="og:url" content="https://soodey.com/recipes/" />
+  {leadImage && <meta property="og:image" content={`https://soodey.com${leadImage.src}`} />}
+  {leadImage && <meta property="og:image:width" content={String(leadImage.width)} />}
+  {leadImage && <meta property="og:image:height" content={String(leadImage.height)} />}
+  {leadImage && <meta property="og:image:alt" content={leadImage.alt} />}
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Soodey's Kitchen — Recipes Without the Clutter" />
+  <meta name="twitter:description" content="Clean, tested recipes without the 2,000-word life story. Straight to ingredients, weights, and steps." />
+  {leadImage && <meta name="twitter:image" content={`https://soodey.com${leadImage.src}`} />}
 
-              <div class="p-6 flex-1 flex flex-col justify-between gap-5">
-                <div class="space-y-2">
-                  <h2 class="font-serif text-2xl font-semibold leading-snug text-bone group-hover:text-white transition">
-                    {r.title}
-                  </h2>
-                  <p class="text-sm text-ash leading-relaxed m-0">
-                    {r.subtitle}
-                  </p>
-                </div>
-
-                <div class="flex flex-wrap items-center gap-x-4 gap-y-2 pt-4 border-t border-white/[0.08] font-mono text-[11px] text-white/45">
-                  <span>Prep {r.prepTime}</span>
-                  <span>Cook {r.cookTime}</span>
-                  <span>{r.yieldShort}</span>
-                  <span class="ml-auto text-crimson font-semibold group-hover:translate-x-1 transition-transform">Open →</span>
-                </div>
-              </div>
-            </a>
-          );
-        })}
-      </section>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,500;0,6..72,600;1,6..72,400&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  />
+  <ClientRouter />
+</head>
+<body class="bg-[#f5efe6] text-[#1f1916] antialiased min-h-screen" style="font-family:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,sans-serif;">
+  <nav class="max-w-[1080px] mx-auto px-5 pt-5 pb-3 flex items-center justify-between gap-4 text-sm" aria-label="Site navigation">
+    <a class="inline-flex items-center gap-2.5 text-[#1f1916] hover:text-[#9e3b1d] transition font-serif text-xl font-semibold tracking-[-0.01em]" href="/recipes/">
+      <span class="w-2 h-2 rounded-full bg-[#9e3b1d] shrink-0" aria-hidden="true"></span>
+      <span>Soodey’s Kitchen</span>
+    </a>
+    <div class="flex items-center gap-5">
+      <a class="text-[#9e3b1d] font-medium" href="/recipes/">Recipes</a>
+      <a class="text-[#5a5047] hover:text-[#9e3b1d] font-medium transition" href="/gallery/">Gallery</a>
+      <a class="text-[#5a5047] hover:text-[#9e3b1d] font-medium transition" href="/">soodey.com</a>
     </div>
+  </nav>
+
+  <main class="max-w-[1080px] mx-auto px-5 pt-3 pb-16">
+    <header class="py-7 border-b border-[#e4dacb] mb-8 animate-rise">
+      <div class="text-xs font-bold uppercase tracking-[0.11em] text-[#9e3b1d] mb-2.5">
+        Tested Recipes · Zero Blog Clutter
+      </div>
+      <h1 class="font-serif text-4xl sm:text-5xl font-semibold leading-[1.1] tracking-[-0.02em] text-[#1f1916] m-0 mb-2.5">
+        Recipes
+      </h1>
+      <p class="text-[#5a5047] text-base sm:text-[1.05rem] max-w-[600px] m-0 leading-relaxed">
+        No life stories, no popups, no jump-to-recipe button needed. Just dialed-in weights, clear steps, and kitchen-friendly recipe cards.
+      </p>
+    </header>
+
+    <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-7" aria-label="Recipe collection">
+      {recipes.map((entry) => {
+        const r = entry.data;
+        return (
+          <a
+            href={`/recipes/${entry.id}/`}
+            class="group flex flex-col bg-[#fffdf9] border border-[#e4dacb] hover:border-[#d3c5b1] rounded-[18px] overflow-hidden shadow-[0_1px_2px_rgba(31,25,22,0.04),0_14px_36px_rgba(31,25,22,0.06)] hover:shadow-[0_4px_12px_rgba(31,25,22,0.07),0_18px_40px_rgba(31,25,22,0.09)] hover:-translate-y-0.5 transition duration-200 animate-rise"
+          >
+            <div class="relative aspect-[16/10] overflow-hidden bg-[#e9dfd1]">
+              <img
+                src={r.image.src}
+                alt={r.image.alt}
+                class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                loading="eager"
+              />
+              <span class="absolute top-3.5 left-3.5 bg-[#fffdf9]/95 text-[#9e3b1d] text-[11px] font-bold tracking-[0.08em] uppercase px-2.5 py-1 rounded-full border border-[#9e3b1d]/20 backdrop-blur-sm">
+                {r.category}
+              </span>
+            </div>
+
+            <div class="p-6 flex flex-col flex-1">
+              <h2 class="font-serif text-2xl font-semibold leading-[1.2] tracking-[-0.015em] text-[#1f1916] m-0 mb-2">
+                {r.title}
+              </h2>
+              <p class="text-sm text-[#5a5047] leading-relaxed m-0 mb-5 flex-1">
+                {r.subtitle}
+              </p>
+              <div class="flex flex-wrap gap-x-4 gap-y-2 pt-3.5 border-t border-[#e4dacb] text-xs text-[#82766a] font-medium">
+                <span>Prep: {r.prepTime}</span>
+                <span>Cook: {r.cookTime}</span>
+                <span>{r.yieldShort}</span>
+                <span class="text-[#9e3b1d] font-bold ml-auto">Open Card →</span>
+              </div>
+            </div>
+          </a>
+        );
+      })}
+    </section>
   </main>
-</BaseLayout>
+</body>
+</html>

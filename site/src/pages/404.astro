@@ -2,29 +2,25 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 ---
 
-<BaseLayout title="404 // SOODEY" description="Signal lost." noindex={true}>
+<BaseLayout title="404 — soodey.com" description="Page not found." noindex={true}>
   <main class="min-h-[100dvh] void-grid flex flex-col items-center justify-center px-6 text-center">
-    <div class="space-y-6 max-w-md animate-rise">
-      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-crimson/40 bg-crimson/10 font-mono text-xs uppercase tracking-[0.2em] text-crimson">
-        <span class="w-1.5 h-1.5 rounded-full bg-crimson animate-pulse"></span>
-        <span>Signal Lost</span>
-      </div>
-      <h1 data-text="404" class="glitch-mark is-glitching font-display font-extrabold text-7xl sm:text-9xl tracking-tight leading-none text-bone">
+    <div class="space-y-5 max-w-sm animate-rise">
+      <div class="font-display font-bold text-7xl sm:text-8xl tracking-[-0.04em] leading-none text-bone">
         404
-      </h1>
-      <p class="font-mono text-xs sm:text-sm text-ash leading-relaxed">
-        Nothing here. Whatever inside joke used to live at this URL either moved or never existed.
+      </div>
+      <p class="text-sm text-ash m-0">
+        Page not found.
       </p>
       <div class="flex flex-wrap items-center justify-center gap-3 pt-2">
         <a
           href="/gallery/"
-          class="px-6 py-3 rounded-full bg-crimson hover:bg-crimson-glow text-white font-mono text-xs uppercase tracking-[0.2em] font-semibold transition"
+          class="px-5 py-2.5 rounded-full bg-bone text-void text-xs font-semibold hover:opacity-90 transition"
         >
-          Open Gallery →
+          Gallery →
         </a>
         <a
           href="/"
-          class="px-6 py-3 rounded-full border border-white/15 hover:border-white/40 text-bone font-mono text-xs uppercase tracking-[0.2em] transition"
+          class="px-5 py-2.5 rounded-full border border-white/15 hover:border-white/40 text-bone text-xs font-medium transition"
         >
           Home
         </a>

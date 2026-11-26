@@ -3,12 +3,12 @@ import BaseLayout from '../../../layouts/BaseLayout.astro';
 ---
 
 <BaseLayout
-  title="DVD Corner Lab // SOODEY"
-  description="60fps bouncing DVD logo simulator with corner-hit counter, near-miss telemetry, multi-logo chaos mode, and fullscreen."
+  title="DVD Bounce — soodey.com"
+  description="Bouncing DVD screensaver with corner-hit counter, near-miss distance, multi-logo mode, and fullscreen."
   showNav={true}
   backHref="/gallery/"
   backLabel="Gallery"
-  navSection="DVD Lab"
+  navSection="DVD Bounce"
 >
   <main class="min-h-[calc(100dvh-4rem)] void-grid py-6 px-4 sm:px-8 flex flex-col gap-5 max-w-7xl mx-auto">
     <!-- Telemetry & Controls Bar -->
@@ -33,12 +33,13 @@ import BaseLayout from '../../../layouts/BaseLayout.astro';
       <div class="flex flex-wrap items-center gap-2">
         <label class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/[0.04] border border-white/10 font-mono text-[11px] text-ash">
           <span>SPD</span>
-          <input id="speedSlider" type="range" min="1" max="12" step="0.5" value="3.5" class="w-20 accent-[#ff2244] cursor-pointer" />
+          <input id="speedSlider" type="range" min="1" max="12" step="0.5" value="3.5" class="w-20 accent-[#ef3b4e] cursor-pointer" />
         </label>
-        <button id="addOneBtn" type="button" class="px-3.5 py-2 rounded-full bg-white/[0.05] hover:bg-white/10 border border-white/12 font-mono text-xs text-bone cursor-pointer transition">+1 DVD</button>
-        <button id="chaosBtn" type="button" class="px-3.5 py-2 rounded-full bg-crimson/15 hover:bg-crimson/30 border border-crimson/40 font-mono text-xs text-crimson font-semibold cursor-pointer transition">+5 Chaos</button>
-        <button id="resetBtn" type="button" class="px-3.5 py-2 rounded-full bg-white/[0.03] hover:bg-white/10 border border-white/12 font-mono text-xs text-ash hover:text-bone cursor-pointer transition">Reset</button>
-        <button id="fsBtn" type="button" class="px-3.5 py-2 rounded-full bg-bone text-void font-mono text-xs font-bold cursor-pointer hover:opacity-90 transition">Fullscreen</button>
+        <button id="collideBtn" type="button" aria-pressed="true" class="px-3.5 py-2 rounded-full bg-bone text-void text-xs font-semibold cursor-pointer transition">Collisions: On</button>
+        <button id="addOneBtn" type="button" class="px-3.5 py-2 rounded-full bg-white/[0.05] hover:bg-white/10 border border-white/12 text-xs text-bone cursor-pointer transition">+1 DVD</button>
+        <button id="chaosBtn" type="button" class="px-3.5 py-2 rounded-full bg-white/[0.05] hover:bg-white/10 border border-white/12 text-xs text-bone cursor-pointer transition">+5 DVDs</button>
+        <button id="resetBtn" type="button" class="px-3.5 py-2 rounded-full bg-white/[0.03] hover:bg-white/10 border border-white/12 text-xs text-ash hover:text-bone cursor-pointer transition">Reset</button>
+        <button id="fsBtn" type="button" class="px-3.5 py-2 rounded-full bg-white/[0.08] hover:bg-white/15 border border-white/15 text-bone text-xs font-medium cursor-pointer transition">Fullscreen</button>
       </div>
     </header>
 
@@ -114,7 +115,9 @@ import BaseLayout from '../../../layouts/BaseLayout.astro';
       let closestMiss = Infinity;
       let flashAlpha = 0;
       let speed = parseFloat(speedSlider.value);
+      let collisionsEnabled = true;
       let rafId = 0;
+      const collideBtn = document.getElementById('collideBtn') as HTMLButtonElement | null;
 
       function resize() {
         const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -165,7 +168,7 @@ import BaseLayout from '../../../layouts/BaseLayout.astro';
         ctx.strokeStyle = c;
 
         // Bold italic DVD text
-        ctx.font = `900 italic ${Math.round(l.h * 0.62)}px "Syne", "Arial Black", sans-serif`;
+        ctx.font = `800 italic ${Math.round(l.h * 0.62)}px "Space Grotesk", "Arial Black", sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText('DVD', l.w / 2, l.h * 0.4);
@@ -264,7 +267,48 @@ import BaseLayout from '../../../layouts/BaseLayout.astro';
               burst(bx, by, PALETTE[l.colorIdx], 6);
             }
           }
+        }
 
+        // Logo-to-logo elastic AABB collisions
+        if (collisionsEnabled && logos.length > 1) {
+          for (let i = 0; i < logos.length; i++) {
+            for (let j = i + 1; j < logos.length; j++) {
+              const a = logos[i];
+              const b = logos[j];
+              const overlapX = Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x);
+              const overlapY = Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y);
+              if (overlapX > 0 && overlapY > 0) {
+                if (overlapX < overlapY) {
+                  const push = overlapX / 2 + 0.5;
+                  if (a.x < b.x) { a.x -= push; b.x += push; }
+                  else { a.x += push; b.x -= push; }
+                  const tmp = a.vx; a.vx = b.vx; b.vx = tmp;
+                } else {
+                  const push = overlapY / 2 + 0.5;
+                  if (a.y < b.y) { a.y -= push; b.y += push; }
+                  else { a.y += push; b.y -= push; }
+                  const tmp = a.vy; a.vy = b.vy; b.vy = tmp;
+                }
+
+                // Clamp inside arena
+                a.x = Math.max(0, Math.min(width - a.w, a.x));
+                a.y = Math.max(0, Math.min(height - a.h, a.y));
+                b.x = Math.max(0, Math.min(width - b.w, b.x));
+                b.y = Math.max(0, Math.min(height - b.h, b.y));
+
+                a.colorIdx = (a.colorIdx + 1) % PALETTE.length;
+                b.colorIdx = (b.colorIdx + 2) % PALETTE.length;
+                bounces++;
+                totalBouncesEl.textContent = String(bounces);
+                const ix = (Math.max(a.x, b.x) + Math.min(a.x + a.w, b.x + b.w)) / 2;
+                const iy = (Math.max(a.y, b.y) + Math.min(a.y + a.h, b.y + b.h)) / 2;
+                burst(ix, iy, PALETTE[a.colorIdx], 7);
+              }
+            }
+          }
+        }
+
+        for (const l of logos) {
           drawDvdLogo(l);
         }
 
@@ -311,6 +355,14 @@ import BaseLayout from '../../../layouts/BaseLayout.astro';
       document.getElementById('chaosBtn')?.addEventListener('click', onChaos);
       document.getElementById('resetBtn')?.addEventListener('click', resetAll);
       document.getElementById('fsBtn')?.addEventListener('click', onFs);
+      collideBtn?.addEventListener('click', () => {
+        collisionsEnabled = !collisionsEnabled;
+        collideBtn.setAttribute('aria-pressed', String(collisionsEnabled));
+        collideBtn.textContent = collisionsEnabled ? 'Collisions: On' : 'Collisions: Off';
+        collideBtn.className = collisionsEnabled
+          ? 'px-3.5 py-2 rounded-full bg-bone text-void text-xs font-semibold cursor-pointer transition'
+          : 'px-3.5 py-2 rounded-full bg-white/[0.04] border border-white/12 text-ash hover:text-bone text-xs cursor-pointer transition';
+      });
 
       cleanupDvd = () => {
         cancelAnimationFrame(rafId);
