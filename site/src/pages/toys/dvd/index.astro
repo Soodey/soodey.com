@@ -134,7 +134,7 @@ import BaseLayout from '../../../layouts/BaseLayout.astro';
 
       function spawnLogo(x?: number, y?: number) {
         if (logos.length >= 30) return;
-        const w = width < 520 ? 96 : 128;
+        const w = width < 520 ? 88 : 112;
         const h = Math.round(w * 0.48);
         const dirX = Math.random() > 0.5 ? 1 : -1;
         const dirY = Math.random() > 0.5 ? 1 : -1;
@@ -163,26 +163,26 @@ import BaseLayout from '../../../layouts/BaseLayout.astro';
         ctx.save();
         ctx.translate(l.x, l.y);
         ctx.shadowColor = c;
-        ctx.shadowBlur = 18;
+        ctx.shadowBlur = 14;
         ctx.fillStyle = c;
         ctx.strokeStyle = c;
 
-        // Bold italic DVD text
-        ctx.font = `800 italic ${Math.round(l.h * 0.62)}px "Space Grotesk", "Arial Black", sans-serif`;
+        // Bold italic DVD text sized tightly to the bounding box
+        ctx.font = `800 italic ${Math.round(l.h * 0.72)}px "Space Grotesk", "Arial Black", sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('DVD', l.w / 2, l.h * 0.4);
+        ctx.fillText('DVD', l.w / 2, l.h * 0.36);
 
-        // Classic disc ellipse beneath
+        // Classic disc ellipse flush to edges
         ctx.beginPath();
-        ctx.ellipse(l.w / 2, l.h * 0.8, l.w * 0.43, l.h * 0.14, 0, 0, Math.PI * 2);
+        ctx.ellipse(l.w / 2, l.h * 0.84, l.w * 0.48, l.h * 0.145, 0, 0, Math.PI * 2);
         ctx.fill();
 
         // Inner disc cutout
         ctx.shadowBlur = 0;
         ctx.fillStyle = '#050507';
         ctx.beginPath();
-        ctx.ellipse(l.w / 2, l.h * 0.8, l.w * 0.14, l.h * 0.045, 0, 0, Math.PI * 2);
+        ctx.ellipse(l.w / 2, l.h * 0.84, l.w * 0.15, l.h * 0.045, 0, 0, Math.PI * 2);
         ctx.fill();
 
         ctx.restore();
@@ -269,40 +269,54 @@ import BaseLayout from '../../../layouts/BaseLayout.astro';
           }
         }
 
-        // Logo-to-logo elastic AABB collisions
+        // Tight elliptical logo-to-logo collisions matching the visible DVD silhouette
         if (collisionsEnabled && logos.length > 1) {
           for (let i = 0; i < logos.length; i++) {
             for (let j = i + 1; j < logos.length; j++) {
               const a = logos[i];
               const b = logos[j];
-              const overlapX = Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x);
-              const overlapY = Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y);
-              if (overlapX > 0 && overlapY > 0) {
-                if (overlapX < overlapY) {
-                  const push = overlapX / 2 + 0.5;
-                  if (a.x < b.x) { a.x -= push; b.x += push; }
-                  else { a.x += push; b.x -= push; }
-                  const tmp = a.vx; a.vx = b.vx; b.vx = tmp;
-                } else {
-                  const push = overlapY / 2 + 0.5;
-                  if (a.y < b.y) { a.y -= push; b.y += push; }
-                  else { a.y += push; b.y -= push; }
-                  const tmp = a.vy; a.vy = b.vy; b.vy = tmp;
-                }
+              const acx = a.x + a.w / 2;
+              const acy = a.y + a.h / 2;
+              const bcx = b.x + b.w / 2;
+              const bcy = b.y + b.h / 2;
 
-                // Clamp inside arena
-                a.x = Math.max(0, Math.min(width - a.w, a.x));
-                a.y = Math.max(0, Math.min(height - a.h, a.y));
-                b.x = Math.max(0, Math.min(width - b.w, b.x));
-                b.y = Math.max(0, Math.min(height - b.h, b.y));
+              // Combined semi-axes tightly fitted to visible DVD artwork
+              const rx = (a.w + b.w) * 0.43;
+              const ry = (a.h + b.h) * 0.43;
+              const dx = bcx - acx;
+              const dy = bcy - acy;
+              const nx = dx / rx;
+              const ny = dy / ry;
+              const distSq = nx * nx + ny * ny;
+
+              if (distSq < 1 && distSq > 0.0001) {
+                const dist = Math.sqrt(distSq);
+                const pushFrac = (1 - dist) * 0.52;
+                const sepX = (nx / dist) * rx * pushFrac;
+                const sepY = (ny / dist) * ry * pushFrac;
+
+                a.x = Math.max(0, Math.min(width - a.w, a.x - sepX));
+                a.y = Math.max(0, Math.min(height - a.h, a.y - sepY));
+                b.x = Math.max(0, Math.min(width - b.w, b.x + sepX));
+                b.y = Math.max(0, Math.min(height - b.h, b.y + sepY));
+
+                // Only bounce along axes where logos are actually closing in on each other
+                const hitHoriz = Math.abs(nx) >= Math.abs(ny);
+                if (hitHoriz) {
+                  if (dx * (a.vx - b.vx) > 0) {
+                    const tmp = a.vx; a.vx = b.vx; b.vx = tmp;
+                  }
+                } else {
+                  if (dy * (a.vy - b.vy) > 0) {
+                    const tmp = a.vy; a.vy = b.vy; b.vy = tmp;
+                  }
+                }
 
                 a.colorIdx = (a.colorIdx + 1) % PALETTE.length;
                 b.colorIdx = (b.colorIdx + 2) % PALETTE.length;
                 bounces++;
                 totalBouncesEl.textContent = String(bounces);
-                const ix = (Math.max(a.x, b.x) + Math.min(a.x + a.w, b.x + b.w)) / 2;
-                const iy = (Math.max(a.y, b.y) + Math.min(a.y + a.h, b.y + b.h)) / 2;
-                burst(ix, iy, PALETTE[a.colorIdx], 7);
+                burst((acx + bcx) / 2, (acy + bcy) / 2, PALETTE[a.colorIdx], 7);
               }
             }
           }
