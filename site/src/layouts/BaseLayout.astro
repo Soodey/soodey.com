@@ -1,0 +1,144 @@
+---
+import { ClientRouter } from 'astro:transitions';
+import '../styles/global.css';
+
+interface Props {
+  title: string;
+  description?: string;
+  canonical?: string;
+  ogType?: string;
+  ogImage?: string;
+  ogImageAlt?: string;
+  ogImageWidth?: number;
+  ogImageHeight?: number;
+  ogSiteName?: string;
+  noindex?: boolean;
+  jsonLd?: Record<string, unknown>;
+  showNav?: boolean;
+  backHref?: string;
+  backLabel?: string;
+  navSection?: string;
+  bodyClass?: string;
+}
+
+const {
+  title,
+  description = 'soodey.com',
+  canonical,
+  ogType = 'website',
+  ogImage,
+  ogImageAlt,
+  ogImageWidth,
+  ogImageHeight,
+  ogSiteName = 'soodey.com',
+  noindex = false,
+  jsonLd,
+  showNav = false,
+  backHref = '/gallery/',
+  backLabel = 'Gallery',
+  navSection,
+  bodyClass = '',
+} = Astro.props;
+
+const canonicalUrl = canonical ?? new URL(Astro.url.pathname, Astro.site ?? 'https://soodey.com').toString();
+---
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{title}</title>
+  <meta name="description" content={description} />
+  <link rel="canonical" href={canonicalUrl} />
+  <meta name="theme-color" content="#060607" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  {noindex && <meta name="robots" content="noindex, nofollow" />}
+
+  <!-- Open Graph -->
+  <meta property="og:type" content={ogType} />
+  <meta property="og:site_name" content={ogSiteName} />
+  <meta property="og:locale" content="en_US" />
+  <meta property="og:title" content={title} />
+  <meta property="og:description" content={description} />
+  <meta property="og:url" content={canonicalUrl} />
+  {ogImage && <meta property="og:image" content={ogImage} />}
+  {ogImage && ogImageWidth && <meta property="og:image:width" content={String(ogImageWidth)} />}
+  {ogImage && ogImageHeight && <meta property="og:image:height" content={String(ogImageHeight)} />}
+  {ogImage && ogImageAlt && <meta property="og:image:alt" content={ogImageAlt} />}
+
+  <!-- Twitter / X -->
+  <meta name="twitter:card" content={ogImage ? 'summary_large_image' : 'summary'} />
+  <meta name="twitter:title" content={title} />
+  <meta name="twitter:description" content={description} />
+  {ogImage && <meta name="twitter:image" content={ogImage} />}
+  {ogImage && ogImageAlt && <meta name="twitter:image:alt" content={ogImageAlt} />}
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,500;0,6..72,600;1,6..72,400&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Syne:wght@700;800&display=swap"
+    rel="stylesheet"
+  />
+
+  <ClientRouter />
+
+  {jsonLd && (
+    <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+  )}
+
+  <slot name="head" />
+</head>
+<body class:list={['bg-void text-bone antialiased selection:bg-crimson/35', bodyClass]}>
+  <div class="film-grain no-print" aria-hidden="true"></div>
+
+  {showNav && (
+    <header class="sticky top-0 z-30 border-b border-white/[0.08] bg-void/80 backdrop-blur-xl no-print">
+      <div class="max-w-7xl mx-auto px-5 sm:px-8 h-16 flex items-center justify-between gap-4">
+        <div class="flex items-center gap-4 min-w-0">
+          <a href="/" class="group inline-flex items-center gap-2.5 text-bone hover:text-white transition">
+            <span class="w-2.5 h-2.5 rounded-full bg-crimson shadow-[0_0_12px_#ff2244] group-hover:scale-125 transition-transform"></span>
+            <span class="font-display font-extrabold tracking-[0.14em] text-sm uppercase">SOODEY</span>
+          </a>
+          {navSection && (
+            <>
+              <span class="text-white/20 font-mono text-xs">/</span>
+              <span class="font-mono text-xs uppercase tracking-[0.14em] text-ash truncate">{navSection}</span>
+            </>
+          )}
+        </div>
+
+        <nav class="flex items-center gap-2" aria-label="Site navigation">
+          <a
+            href={backHref}
+            class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-white/12 bg-white/[0.03] hover:border-crimson/60 hover:bg-crimson/10 text-xs font-mono uppercase tracking-wider text-bone transition"
+          >
+            <span aria-hidden="true">←</span>
+            <span>{backLabel}</span>
+          </a>
+        </nav>
+      </div>
+    </header>
+  )}
+
+  <slot />
+
+  <script>
+    function initSpotlights() {
+      document.querySelectorAll('.kinetic-card').forEach((el) => {
+        if ((el as HTMLElement).dataset.spotBound) return;
+        (el as HTMLElement).dataset.spotBound = '1';
+        el.addEventListener('pointermove', (e) => {
+          const ev = e as PointerEvent;
+          const r = el.getBoundingClientRect();
+          (el as HTMLElement).style.setProperty('--mx', `${ev.clientX - r.left}px`);
+          (el as HTMLElement).style.setProperty('--my', `${ev.clientY - r.top}px`);
+        });
+      });
+    }
+    document.addEventListener('astro:page-load', initSpotlights);
+    initSpotlights();
+  </script>
+</body>
+</html>

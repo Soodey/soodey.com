@@ -1,0 +1,34 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="404 // SOODEY" description="Signal lost." noindex={true}>
+  <main class="min-h-[100dvh] void-grid flex flex-col items-center justify-center px-6 text-center">
+    <div class="space-y-6 max-w-md animate-rise">
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-crimson/40 bg-crimson/10 font-mono text-xs uppercase tracking-[0.2em] text-crimson">
+        <span class="w-1.5 h-1.5 rounded-full bg-crimson animate-pulse"></span>
+        <span>Signal Lost</span>
+      </div>
+      <h1 data-text="404" class="glitch-mark is-glitching font-display font-extrabold text-7xl sm:text-9xl tracking-tight leading-none text-bone">
+        404
+      </h1>
+      <p class="font-mono text-xs sm:text-sm text-ash leading-relaxed">
+        Nothing here. Whatever inside joke used to live at this URL either moved or never existed.
+      </p>
+      <div class="flex flex-wrap items-center justify-center gap-3 pt-2">
+        <a
+          href="/gallery/"
+          class="px-6 py-3 rounded-full bg-crimson hover:bg-crimson-glow text-white font-mono text-xs uppercase tracking-[0.2em] font-semibold transition"
+        >
+          Open Gallery →
+        </a>
+        <a
+          href="/"
+          class="px-6 py-3 rounded-full border border-white/15 hover:border-white/40 text-bone font-mono text-xs uppercase tracking-[0.2em] transition"
+        >
+          Home
+        </a>
+      </div>
+    </div>
+  </main>
+</BaseLayout>

@@ -1,0 +1,229 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="Sweep Chronometer // SOODEY"
+  description="60fps analog sweep clock with selectable Obsidian, Swiss, and Phosphor dials plus fullscreen desk mode."
+  showNav={true}
+  backHref="/gallery/"
+  backLabel="Gallery"
+  navSection="Clock"
+>
+  <main id="clockShell" class="min-h-[calc(100dvh-4rem)] void-grid py-8 px-4 sm:px-8 flex flex-col items-center justify-center gap-7">
+    <!-- Dial Mode Switcher -->
+    <div class="flex flex-wrap items-center justify-center gap-2 animate-rise">
+      <button type="button" data-dial="obsidian" class="dial-btn px-4 py-1.5 rounded-full border border-crimson bg-crimson text-white font-mono text-xs uppercase tracking-wider cursor-pointer transition">Obsidian</button>
+      <button type="button" data-dial="swiss" class="dial-btn px-4 py-1.5 rounded-full border border-white/15 bg-white/[0.04] text-ash hover:text-bone font-mono text-xs uppercase tracking-wider cursor-pointer transition">Swiss White</button>
+      <button type="button" data-dial="phosphor" class="dial-btn px-4 py-1.5 rounded-full border border-white/15 bg-white/[0.04] text-ash hover:text-bone font-mono text-xs uppercase tracking-wider cursor-pointer transition">Phosphor</button>
+      <button type="button" id="clockFsBtn" class="px-4 py-1.5 rounded-full border border-white/20 bg-white/[0.06] text-bone hover:border-white/50 font-mono text-xs uppercase tracking-wider cursor-pointer transition">Fullscreen</button>
+    </div>
+
+    <!-- Analog Canvas -->
+    <div class="relative flex items-center justify-center">
+      <canvas id="clockCanvas" width="440" height="440" class="w-[min(82vw,420px)] h-[min(82vw,420px)] block"></canvas>
+    </div>
+
+    <!-- Digital Telemetry Strip -->
+    <div class="w-full max-w-md rounded-2xl bg-surface border border-white/[0.09] px-6 py-4 space-y-3 text-center">
+      <div id="digitalTime" class="font-mono text-3xl sm:text-4xl font-bold tracking-[0.08em] text-bone tabular-nums">00:00:00</div>
+      <div class="flex items-center justify-between font-mono text-[11px] text-ash">
+        <span id="dateReadout">---</span>
+        <span id="unixReadout" class="tabular-nums">UNIX ---</span>
+      </div>
+      <div class="space-y-1">
+        <div class="h-1 w-full rounded-full bg-white/10 overflow-hidden">
+          <div id="dayBar" class="h-full bg-crimson rounded-full" style="width: 0%;"></div>
+        </div>
+        <div class="flex justify-between font-mono text-[10px] text-white/35 uppercase tracking-widest">
+          <span>Day Elapsed</span>
+          <span id="dayPct" class="tabular-nums">0.0%</span>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    let cleanupClock: (() => void) | null = null;
+
+    function initClock() {
+      if (cleanupClock) {
+        cleanupClock();
+        cleanupClock = null;
+      }
+
+      const canvas = document.getElementById('clockCanvas') as HTMLCanvasElement | null;
+      const shell = document.getElementById('clockShell') as HTMLElement | null;
+      if (!canvas || !shell) return;
+
+      const ctx = canvas.getContext('2d')!;
+      const digitalTime = document.getElementById('digitalTime')!;
+      const dateReadout = document.getElementById('dateReadout')!;
+      const unixReadout = document.getElementById('unixReadout')!;
+      const dayBar = document.getElementById('dayBar')!;
+      const dayPct = document.getElementById('dayPct')!;
+
+      const DIALS = {
+        obsidian: {
+          face: '#0d0d11',
+          rim: 'rgba(255,255,255,0.18)',
+          tickMajor: '#f4f3ef',
+          tickMinor: 'rgba(255,255,255,0.22)',
+          num: '#f4f3ef',
+          hand: '#f4f3ef',
+          sec: '#ff2244',
+        },
+        swiss: {
+          face: '#f4f3ef',
+          rim: '#1a1a1f',
+          tickMajor: '#111114',
+          tickMinor: 'rgba(17,17,20,0.32)',
+          num: '#111114',
+          hand: '#111114',
+          sec: '#e11d48',
+        },
+        phosphor: {
+          face: '#050b07',
+          rim: 'rgba(34,197,94,0.45)',
+          tickMajor: '#4ade80',
+          tickMinor: 'rgba(74,222,128,0.28)',
+          num: '#4ade80',
+          hand: '#86efac',
+          sec: '#22c55e',
+        },
+      };
+
+      let activeDial: keyof typeof DIALS = 'obsidian';
+      let rafId = 0;
+
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const size = 440;
+      canvas.width = size * dpr;
+      canvas.height = size * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      function drawHand(angle: number, len: number, width: number, color: string, tail = 0) {
+        ctx.save();
+        ctx.rotate(angle);
+        ctx.beginPath();
+        ctx.lineWidth = width;
+        ctx.lineCap = 'round';
+        ctx.strokeStyle = color;
+        ctx.moveTo(0, tail);
+        ctx.lineTo(0, -len);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      function render() {
+        const theme = DIALS[activeDial];
+        const now = new Date();
+        const ms = now.getMilliseconds();
+        const sec = now.getSeconds() + ms / 1000;
+        const min = now.getMinutes() + sec / 60;
+        const hr = (now.getHours() % 12) + min / 60;
+
+        ctx.clearRect(0, 0, size, size);
+        ctx.save();
+        ctx.translate(size / 2, size / 2);
+        const r = size * 0.45;
+
+        // Dial background
+        ctx.beginPath();
+        ctx.arc(0, 0, r, 0, Math.PI * 2);
+        ctx.fillStyle = theme.face;
+        ctx.fill();
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = theme.rim;
+        ctx.stroke();
+
+        // 60 precision ticks
+        for (let i = 0; i < 60; i++) {
+          const isMajor = i % 5 === 0;
+          ctx.save();
+          ctx.rotate((i * Math.PI) / 30);
+          ctx.beginPath();
+          ctx.strokeStyle = isMajor ? theme.tickMajor : theme.tickMinor;
+          ctx.lineWidth = isMajor ? 3 : 1.25;
+          ctx.moveTo(0, -r + 8);
+          ctx.lineTo(0, -r + (isMajor ? 22 : 14));
+          ctx.stroke();
+          ctx.restore();
+        }
+
+        // Subtle numerals at 12, 3, 6, 9
+        ctx.fillStyle = theme.num;
+        ctx.font = '700 18px "JetBrains Mono", monospace';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('12', 0, -r + 42);
+        ctx.fillText('3', r - 42, 0);
+        ctx.fillText('6', 0, r - 42);
+        ctx.fillText('9', -r + 42, 0);
+
+        // Hands
+        drawHand((hr * Math.PI) / 6, r * 0.52, 7, theme.hand, 16);
+        drawHand((min * Math.PI) / 30, r * 0.74, 4.5, theme.hand, 20);
+
+        // Iconic Swiss lollipop sweep second hand
+        ctx.save();
+        ctx.rotate((sec * Math.PI) / 30);
+        ctx.strokeStyle = theme.sec;
+        ctx.fillStyle = theme.sec;
+        ctx.lineWidth = 2.2;
+        ctx.beginPath();
+        ctx.moveTo(0, 32);
+        ctx.lineTo(0, -r * 0.8);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(0, -r * 0.64, 5.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+
+        // Center pin
+        ctx.beginPath();
+        ctx.arc(0, 0, 5.5, 0, Math.PI * 2);
+        ctx.fillStyle = theme.sec;
+        ctx.fill();
+        ctx.restore();
+
+        // Digital readouts
+        digitalTime.textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+        dateReadout.textContent = now.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }).toUpperCase();
+        unixReadout.textContent = `UNIX ${Math.floor(now.getTime() / 1000)}`;
+
+        const secsToday = now.getHours() * 3600 + now.getMinutes() * 60 + sec;
+        const pct = (secsToday / 86400) * 100;
+        dayBar.style.width = `${pct.toFixed(2)}%`;
+        dayPct.textContent = `${pct.toFixed(1)}%`;
+
+        rafId = requestAnimationFrame(render);
+      }
+
+      document.querySelectorAll('.dial-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const el = btn as HTMLButtonElement;
+          activeDial = (el.dataset.dial as keyof typeof DIALS) || 'obsidian';
+          document.querySelectorAll('.dial-btn').forEach((b) => {
+            const on = b === el;
+            b.className = on
+              ? 'dial-btn px-4 py-1.5 rounded-full border border-crimson bg-crimson text-white font-mono text-xs uppercase tracking-wider cursor-pointer transition'
+              : 'dial-btn px-4 py-1.5 rounded-full border border-white/15 bg-white/[0.04] text-ash hover:text-bone font-mono text-xs uppercase tracking-wider cursor-pointer transition';
+          });
+        });
+      });
+
+      document.getElementById('clockFsBtn')?.addEventListener('click', () => {
+        if (!document.fullscreenElement) shell.requestFullscreen?.();
+        else document.exitFullscreen?.();
+      });
+
+      rafId = requestAnimationFrame(render);
+      cleanupClock = () => cancelAnimationFrame(rafId);
+    }
+
+    document.addEventListener('astro:page-load', initClock);
+    document.addEventListener('astro:before-swap', () => { cleanupClock?.(); cleanupClock = null; });
+    initClock();
+  </script>
+</BaseLayout>

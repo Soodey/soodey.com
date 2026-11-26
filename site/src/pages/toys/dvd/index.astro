@@ -1,0 +1,325 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="DVD Corner Lab // SOODEY"
+  description="60fps bouncing DVD logo simulator with corner-hit counter, near-miss telemetry, multi-logo chaos mode, and fullscreen."
+  showNav={true}
+  backHref="/gallery/"
+  backLabel="Gallery"
+  navSection="DVD Lab"
+>
+  <main class="min-h-[calc(100dvh-4rem)] void-grid py-6 px-4 sm:px-8 flex flex-col gap-5 max-w-7xl mx-auto">
+    <!-- Telemetry & Controls Bar -->
+    <header class="flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-surface border border-white/[0.09] px-5 py-4 animate-rise">
+      <div class="flex flex-wrap items-center gap-6">
+        <div>
+          <div class="font-mono text-[10px] uppercase tracking-[0.18em] text-ash">Corner Hits</div>
+          <div id="cornerHits" class="font-display font-extrabold text-2xl text-crimson tabular-nums">0</div>
+        </div>
+        <div class="h-8 w-px bg-white/10"></div>
+        <div>
+          <div class="font-mono text-[10px] uppercase tracking-[0.18em] text-ash">Total Bounces</div>
+          <div id="totalBounces" class="font-mono font-bold text-xl text-bone tabular-nums">0</div>
+        </div>
+        <div class="h-8 w-px bg-white/10 hidden sm:block"></div>
+        <div class="hidden sm:block">
+          <div class="font-mono text-[10px] uppercase tracking-[0.18em] text-ash">Closest Miss</div>
+          <div id="closestMiss" class="font-mono font-bold text-xl text-amber-hot tabular-nums">-- px</div>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2">
+        <label class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/[0.04] border border-white/10 font-mono text-[11px] text-ash">
+          <span>SPD</span>
+          <input id="speedSlider" type="range" min="1" max="12" step="0.5" value="3.5" class="w-20 accent-[#ff2244] cursor-pointer" />
+        </label>
+        <button id="addOneBtn" type="button" class="px-3.5 py-2 rounded-full bg-white/[0.05] hover:bg-white/10 border border-white/12 font-mono text-xs text-bone cursor-pointer transition">+1 DVD</button>
+        <button id="chaosBtn" type="button" class="px-3.5 py-2 rounded-full bg-crimson/15 hover:bg-crimson/30 border border-crimson/40 font-mono text-xs text-crimson font-semibold cursor-pointer transition">+5 Chaos</button>
+        <button id="resetBtn" type="button" class="px-3.5 py-2 rounded-full bg-white/[0.03] hover:bg-white/10 border border-white/12 font-mono text-xs text-ash hover:text-bone cursor-pointer transition">Reset</button>
+        <button id="fsBtn" type="button" class="px-3.5 py-2 rounded-full bg-bone text-void font-mono text-xs font-bold cursor-pointer hover:opacity-90 transition">Fullscreen</button>
+      </div>
+    </header>
+
+    <!-- Live Bounce Arena -->
+    <div
+      id="arenaWrap"
+      class="relative flex-1 min-h-[62dvh] rounded-3xl bg-[#050507] border border-white/12 overflow-hidden shadow-2xl"
+    >
+      <canvas id="dvdCanvas" class="w-full h-full block"></canvas>
+      <div
+        id="cornerBanner"
+        class="pointer-events-none absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-300"
+      >
+        <span class="px-8 py-4 rounded-2xl bg-crimson text-white font-display font-extrabold text-3xl sm:text-5xl tracking-wider shadow-[0_0_80px_#ff2244]">
+          CORNER HIT!
+        </span>
+      </div>
+      <div class="pointer-events-none absolute bottom-3 right-4 font-mono text-[10px] uppercase tracking-[0.2em] text-white/25">
+        <span id="logoCountLabel">1 LOGO ACTIVE</span> · CLICK ARENA TO SPAWN
+      </div>
+    </div>
+  </main>
+
+  <script>
+    let cleanupDvd: (() => void) | null = null;
+
+    function initDvd() {
+      if (cleanupDvd) {
+        cleanupDvd();
+        cleanupDvd = null;
+      }
+
+      const canvas = document.getElementById('dvdCanvas') as HTMLCanvasElement | null;
+      const arenaWrap = document.getElementById('arenaWrap') as HTMLElement | null;
+      if (!canvas || !arenaWrap) return;
+
+      const ctx = canvas.getContext('2d')!;
+      const cornerHitsEl = document.getElementById('cornerHits')!;
+      const totalBouncesEl = document.getElementById('totalBounces')!;
+      const closestMissEl = document.getElementById('closestMiss')!;
+      const logoCountLabel = document.getElementById('logoCountLabel')!;
+      const cornerBanner = document.getElementById('cornerBanner')!;
+      const speedSlider = document.getElementById('speedSlider') as HTMLInputElement;
+
+      const PALETTE = ['#ff2244', '#22d3ee', '#f59e0b', '#a855f7', '#10b981', '#f43f5e', '#38bdf8', '#eab308'];
+      const CORNER_TOLERANCE = 10;
+
+      interface Logo {
+        x: number;
+        y: number;
+        vx: number;
+        vy: number;
+        w: number;
+        h: number;
+        colorIdx: number;
+      }
+
+      interface Spark {
+        x: number;
+        y: number;
+        vx: number;
+        vy: number;
+        life: number;
+        color: string;
+      }
+
+      let width = 800;
+      let height = 500;
+      let logos: Logo[] = [];
+      let sparks: Spark[] = [];
+      let cornerHits = 0;
+      let bounces = 0;
+      let closestMiss = Infinity;
+      let flashAlpha = 0;
+      let speed = parseFloat(speedSlider.value);
+      let rafId = 0;
+
+      function resize() {
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        width = arenaWrap!.clientWidth;
+        height = arenaWrap!.clientHeight;
+        canvas!.width = Math.floor(width * dpr);
+        canvas!.height = Math.floor(height * dpr);
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        logos.forEach((l) => {
+          l.x = Math.min(Math.max(0, l.x), Math.max(0, width - l.w));
+          l.y = Math.min(Math.max(0, l.y), Math.max(0, height - l.h));
+        });
+      }
+
+      function spawnLogo(x?: number, y?: number) {
+        if (logos.length >= 30) return;
+        const w = width < 520 ? 96 : 128;
+        const h = Math.round(w * 0.48);
+        const dirX = Math.random() > 0.5 ? 1 : -1;
+        const dirY = Math.random() > 0.5 ? 1 : -1;
+        logos.push({
+          x: x !== undefined ? Math.max(0, Math.min(width - w, x - w / 2)) : Math.random() * Math.max(10, width - w),
+          y: y !== undefined ? Math.max(0, Math.min(height - h, y - h / 2)) : Math.random() * Math.max(10, height - h),
+          vx: dirX,
+          vy: dirY,
+          w,
+          h,
+          colorIdx: Math.floor(Math.random() * PALETTE.length),
+        });
+        logoCountLabel.textContent = `${logos.length} ${logos.length === 1 ? 'LOGO' : 'LOGOS'} ACTIVE`;
+      }
+
+      function burst(x: number, y: number, color: string, count: number) {
+        for (let i = 0; i < count; i++) {
+          const ang = Math.random() * Math.PI * 2;
+          const spd = 1.5 + Math.random() * 6.5;
+          sparks.push({ x, y, vx: Math.cos(ang) * spd, vy: Math.sin(ang) * spd, life: 1, color });
+        }
+      }
+
+      function drawDvdLogo(l: Logo) {
+        const c = PALETTE[l.colorIdx];
+        ctx.save();
+        ctx.translate(l.x, l.y);
+        ctx.shadowColor = c;
+        ctx.shadowBlur = 18;
+        ctx.fillStyle = c;
+        ctx.strokeStyle = c;
+
+        // Bold italic DVD text
+        ctx.font = `900 italic ${Math.round(l.h * 0.62)}px "Syne", "Arial Black", sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('DVD', l.w / 2, l.h * 0.4);
+
+        // Classic disc ellipse beneath
+        ctx.beginPath();
+        ctx.ellipse(l.w / 2, l.h * 0.8, l.w * 0.43, l.h * 0.14, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Inner disc cutout
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = '#050507';
+        ctx.beginPath();
+        ctx.ellipse(l.w / 2, l.h * 0.8, l.w * 0.14, l.h * 0.045, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.restore();
+      }
+
+      function resetAll() {
+        logos = [];
+        sparks = [];
+        cornerHits = 0;
+        bounces = 0;
+        closestMiss = Infinity;
+        cornerHitsEl.textContent = '0';
+        totalBouncesEl.textContent = '0';
+        closestMissEl.textContent = '-- px';
+        spawnLogo();
+      }
+
+      function tick() {
+        ctx.fillStyle = '#050507';
+        ctx.fillRect(0, 0, width, height);
+
+        if (flashAlpha > 0.01) {
+          ctx.fillStyle = `rgba(255, 34, 68, ${flashAlpha})`;
+          ctx.fillRect(0, 0, width, height);
+          flashAlpha *= 0.91;
+        }
+
+        for (const l of logos) {
+          l.x += l.vx * speed;
+          l.y += l.vy * speed;
+
+          let hitX = false;
+          let hitY = false;
+
+          if (l.x <= 0) {
+            l.x = 0;
+            l.vx = Math.abs(l.vx);
+            hitX = true;
+          } else if (l.x + l.w >= width) {
+            l.x = width - l.w;
+            l.vx = -Math.abs(l.vx);
+            hitX = true;
+          }
+
+          if (l.y <= 0) {
+            l.y = 0;
+            l.vy = Math.abs(l.vy);
+            hitY = true;
+          } else if (l.y + l.h >= height) {
+            l.y = height - l.h;
+            l.vy = -Math.abs(l.vy);
+            hitY = true;
+          }
+
+          if (hitX || hitY) {
+            bounces++;
+            totalBouncesEl.textContent = String(bounces);
+            l.colorIdx = (l.colorIdx + 1 + Math.floor(Math.random() * (PALETTE.length - 1))) % PALETTE.length;
+
+            // Measure distance to nearest corner on every wall bounce
+            const distX = Math.min(l.x, width - (l.x + l.w));
+            const distY = Math.min(l.y, height - (l.y + l.h));
+            const cornerDist = Math.round(Math.hypot(distX, distY));
+
+            if (cornerDist < closestMiss) {
+              closestMiss = cornerDist;
+              closestMissEl.textContent = `${closestMiss} px`;
+            }
+
+            if ((hitX && hitY) || cornerDist <= CORNER_TOLERANCE) {
+              cornerHits++;
+              cornerHitsEl.textContent = String(cornerHits);
+              flashAlpha = 0.42;
+              const cx = distX === l.x ? 12 : width - 12;
+              const cy = distY === l.y ? 12 : height - 12;
+              burst(cx, cy, PALETTE[l.colorIdx], 42);
+              cornerBanner.style.opacity = '1';
+              setTimeout(() => (cornerBanner.style.opacity = '0'), 900);
+            } else {
+              const bx = hitX ? (l.x === 0 ? 4 : width - 4) : l.x + l.w / 2;
+              const by = hitY ? (l.y === 0 ? 4 : height - 4) : l.y + l.h / 2;
+              burst(bx, by, PALETTE[l.colorIdx], 6);
+            }
+          }
+
+          drawDvdLogo(l);
+        }
+
+        // Update sparks
+        for (let i = sparks.length - 1; i >= 0; i--) {
+          const s = sparks[i];
+          s.x += s.vx;
+          s.y += s.vy;
+          s.life -= 0.028;
+          if (s.life <= 0) {
+            sparks.splice(i, 1);
+            continue;
+          }
+          ctx.globalAlpha = s.life;
+          ctx.fillStyle = s.color;
+          ctx.fillRect(s.x, s.y, 3, 3);
+          ctx.globalAlpha = 1;
+        }
+
+        rafId = requestAnimationFrame(tick);
+      }
+
+      resize();
+      spawnLogo();
+      rafId = requestAnimationFrame(tick);
+
+      const onResize = () => resize();
+      const onSpeed = () => { speed = parseFloat(speedSlider.value); };
+      const onArenaClick = (e: MouseEvent) => {
+        const r = canvas.getBoundingClientRect();
+        spawnLogo(e.clientX - r.left, e.clientY - r.top);
+      };
+      const onAddOne = () => spawnLogo();
+      const onChaos = () => { for (let i = 0; i < 5; i++) spawnLogo(); };
+      const onFs = () => {
+        if (!document.fullscreenElement) arenaWrap.requestFullscreen?.();
+        else document.exitFullscreen?.();
+      };
+
+      window.addEventListener('resize', onResize);
+      speedSlider.addEventListener('input', onSpeed);
+      canvas.addEventListener('click', onArenaClick);
+      document.getElementById('addOneBtn')?.addEventListener('click', onAddOne);
+      document.getElementById('chaosBtn')?.addEventListener('click', onChaos);
+      document.getElementById('resetBtn')?.addEventListener('click', resetAll);
+      document.getElementById('fsBtn')?.addEventListener('click', onFs);
+
+      cleanupDvd = () => {
+        cancelAnimationFrame(rafId);
+        window.removeEventListener('resize', onResize);
+      };
+    }
+
+    document.addEventListener('astro:page-load', initDvd);
+    document.addEventListener('astro:before-swap', () => { cleanupDvd?.(); cleanupDvd = null; });
+    initDvd();
+  </script>
+</BaseLayout>

@@ -1,0 +1,500 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+export async function getStaticPaths() {
+  const recipes = await getCollection('recipes');
+  return recipes.map((entry) => ({
+    params: { slug: entry.id },
+    props: { entry },
+  }));
+}
+
+const { entry } = Astro.props;
+const r = entry.data;
+const totalSteps = r.parts.reduce((acc, part) => acc + part.steps.length, 0);
+
+const jsonLd = {
+  '@context': 'https://schema.org/',
+  '@type': 'Recipe',
+  name: r.title,
+  description: r.description,
+  image: [`https://soodey.com${r.image.src}`],
+  author: { '@type': 'Person', name: r.author },
+  datePublished: r.datePublished,
+  prepTime: r.prepTimeISO,
+  cookTime: r.cookTimeISO,
+  totalTime: r.totalTimeISO,
+  recipeYield: r.yield,
+  recipeCategory: r.category,
+  recipeCuisine: r.cuisine,
+  keywords: r.keywords,
+  recipeIngredient: r.ingredients.map((i) => i.schemaText),
+  recipeInstructions: r.parts.map((part) => ({
+    '@type': 'HowToSection',
+    name: `${part.pill}: ${part.title}`,
+    itemListElement: part.steps.map((step) => ({
+      '@type': 'HowToStep',
+      name: step.title,
+      text: step.schemaText,
+    })),
+  })),
+};
+---
+
+<BaseLayout
+  title={`${r.title} — SOODEY`}
+  description={r.description}
+  ogType="article"
+  ogSiteName="Soodey's Kitchen"
+  ogImage={`https://soodey.com${r.image.src}`}
+  ogImageAlt={r.image.alt}
+  ogImageWidth={r.image.width}
+  ogImageHeight={r.image.height}
+  jsonLd={jsonLd}
+  showNav={true}
+  backHref="/recipes/"
+  backLabel="All Recipes"
+  navSection="Recipes"
+>
+  <Fragment slot="head">
+    <style>
+      .ingredient-item.is-checked .ingredient-label { opacity: 0.45; }
+      .ingredient-item.is-checked .ingredient-main { text-decoration: line-through; text-decoration-color: rgba(255,255,255,0.4); }
+      .step-card.is-done { opacity: 0.5; border-color: rgba(255,255,255,0.06); background: rgba(255,255,255,0.015); }
+      .step-card.is-done .step-num { background: #10b981; border-color: #10b981; color: #05130d; font-size: 0; }
+      .step-card.is-done .step-num::after { content: "✓"; font-size: 0.95rem; font-weight: 800; }
+      .step-card.is-done .step-title { text-decoration: line-through; text-decoration-color: rgba(255,255,255,0.4); }
+      .step-tip { color: #8f8e97; font-style: italic; }
+      .qty-secondary { color: #8f8e97; font-weight: 500; }
+
+      .unit-btn[aria-pressed="true"] {
+        background: #ff2244;
+        color: #ffffff;
+      }
+      #wakeLockBtn[aria-pressed="true"] {
+        background: rgba(255, 34, 68, 0.16);
+        border-color: #ff2244;
+        color: #ffffff;
+      }
+      #wakeLockBtn[aria-pressed="true"] .wake-dot {
+        background: #ff2244;
+        box-shadow: 0 0 10px #ff2244;
+      }
+
+      @media print {
+        @page { margin: 0.5in; }
+        html, body { background: #ffffff !important; color: #111111 !important; color-scheme: light !important; }
+        .no-print { display: none !important; }
+        .recipe-shell { border: none !important; background: #ffffff !important; box-shadow: none !important; }
+        .print-dark-text, h1, h2, h3, h4, p, li, span, dt, dd { color: #111111 !important; }
+        .print-border { border-color: #cccccc !important; background: #f8f8f8 !important; }
+        .step-card, .ingredient-item { opacity: 1 !important; break-inside: avoid; }
+        .step-card.is-done .step-title, .ingredient-item.is-checked .ingredient-main { text-decoration: none !important; }
+      }
+    </style>
+  </Fragment>
+
+  <main class="min-h-[calc(100dvh-4rem)] void-grid py-8 sm:py-12 px-4 sm:px-8">
+    <article
+      class="recipe-shell max-w-6xl mx-auto rounded-3xl bg-surface border border-white/[0.09] shadow-2xl overflow-hidden animate-rise"
+      data-recipe-id={entry.id}
+    >
+      <!-- Header -->
+      <header class="p-6 sm:p-10 border-b border-white/[0.08] space-y-6">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+          <div class="lg:col-span-7 space-y-4">
+            <div class="font-mono text-[11px] uppercase tracking-[0.2em] text-crimson font-semibold">
+              {r.eyebrow}
+            </div>
+            <h1 class="font-serif text-3xl sm:text-5xl font-semibold leading-[1.08] tracking-[-0.02em] text-bone">
+              {r.title}
+            </h1>
+            <p class="font-serif italic text-base sm:text-lg text-ash leading-relaxed m-0">
+              {r.subtitle}
+            </p>
+          </div>
+
+          <figure class="lg:col-span-5 m-0 space-y-2">
+            <div class="rounded-2xl overflow-hidden border border-white/12 aspect-[16/10] bg-elevated">
+              <img src={r.image.src} alt={r.image.alt} class="w-full h-full object-cover" />
+            </div>
+            <figcaption class="font-mono text-[11px] text-white/40 leading-snug no-print">
+              {r.image.caption}
+            </figcaption>
+          </figure>
+        </div>
+
+        <!-- Specs Strip -->
+        <dl class="print-border grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 rounded-2xl bg-white/[0.03] border border-white/[0.08] m-0">
+          <div>
+            <dt class="font-mono text-[10px] uppercase tracking-[0.16em] text-ash">Prep Time</dt>
+            <dd class="text-sm sm:text-base font-bold text-bone mt-0.5 tabular-nums m-0">{r.prepTime}</dd>
+          </div>
+          <div>
+            <dt class="font-mono text-[10px] uppercase tracking-[0.16em] text-ash">Cook &amp; Bake</dt>
+            <dd class="text-sm sm:text-base font-bold text-bone mt-0.5 tabular-nums m-0">{r.cookTime}</dd>
+          </div>
+          <div>
+            <dt class="font-mono text-[10px] uppercase tracking-[0.16em] text-ash">Yield</dt>
+            <dd class="text-sm sm:text-base font-bold text-bone mt-0.5 tabular-nums m-0">{r.yield}</dd>
+          </div>
+          {r.bakingDish && (
+            <div>
+              <dt class="font-mono text-[10px] uppercase tracking-[0.16em] text-ash">Baking Dish</dt>
+              <dd class="text-sm sm:text-base font-bold text-bone mt-0.5 tabular-nums m-0">{r.bakingDish}</dd>
+            </div>
+          )}
+        </dl>
+
+        <!-- Interactive Toolbar -->
+        <div class="no-print flex flex-wrap items-center justify-between gap-3 pt-1">
+          <div class="inline-flex items-center p-1 rounded-full bg-white/[0.04] border border-white/10" role="group" aria-label="Measurement display units">
+            <button type="button" class="unit-btn px-3.5 py-1.5 rounded-full text-xs font-mono font-semibold text-ash hover:text-bone cursor-pointer transition" data-unit-mode="both" aria-pressed="true">Both (g + US)</button>
+            <button type="button" class="unit-btn px-3.5 py-1.5 rounded-full text-xs font-mono font-semibold text-ash hover:text-bone cursor-pointer transition" data-unit-mode="metric" aria-pressed="false">Metric (g)</button>
+            <button type="button" class="unit-btn px-3.5 py-1.5 rounded-full text-xs font-mono font-semibold text-ash hover:text-bone cursor-pointer transition" data-unit-mode="us" aria-pressed="false">US Volume</button>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              id="wakeLockBtn"
+              aria-pressed="false"
+              title="Prevent your screen from dimming while cooking"
+              class="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/15 bg-white/[0.03] hover:border-crimson/60 text-xs font-mono font-semibold text-bone cursor-pointer transition"
+            >
+              <span class="wake-dot w-2 h-2 rounded-full bg-white/30 transition"></span>
+              <span id="wakeLockLabel">Screen Awake</span>
+            </button>
+            <button
+              type="button"
+              id="printBtn"
+              class="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/15 bg-white/[0.03] hover:border-white/40 text-xs font-mono font-semibold text-bone cursor-pointer transition"
+            >
+              <span>Print</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Combined Live Progress Bar -->
+        <div class="no-print space-y-1.5">
+          <div class="flex items-center justify-between font-mono text-[11px] text-ash">
+            <span>COOK PROGRESS</span>
+            <span id="overallProgressLabel" class="text-crimson tabular-nums">0%</span>
+          </div>
+          <div class="h-1.5 w-full rounded-full bg-white/[0.07] overflow-hidden">
+            <div id="overallProgressBar" class="h-full w-0 rounded-full bg-gradient-to-r from-crimson to-amber-hot transition-all duration-300"></div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Two-Column Recipe Body -->
+      <div class="grid grid-cols-1 lg:grid-cols-12">
+        <!-- Ingredients Rail -->
+        <aside class="lg:col-span-5 p-6 sm:p-8 lg:border-r border-b lg:border-b-0 border-white/[0.08] lg:sticky lg:top-16 self-start">
+          <div class="flex items-baseline justify-between gap-2 pb-3 mb-4 border-b-2 border-crimson">
+            <h2 class="font-mono text-xs font-bold uppercase tracking-[0.18em] text-crimson m-0">Ingredients</h2>
+            <div class="flex items-center gap-2.5 font-mono text-xs text-ash no-print">
+              <span id="ingredientCounter" class="tabular-nums">0 / {r.ingredients.length}</span>
+              <button type="button" id="resetIngredientsBtn" hidden class="text-crimson underline cursor-pointer bg-transparent border-0 p-0 text-xs font-mono">Reset</button>
+            </div>
+          </div>
+
+          <ul class="list-none p-0 m-0 divide-y divide-white/[0.07]">
+            {r.ingredients.map((ing) => (
+              <li class="ingredient-item" data-id={ing.id}>
+                <label class="ingredient-label flex items-start gap-3 py-3 px-2 -mx-2 rounded-lg hover:bg-white/[0.03] cursor-pointer select-none transition">
+                  <input
+                    type="checkbox"
+                    class="ingredient-checkbox mt-0.5 w-4 h-4 accent-[#ff2244] cursor-pointer shrink-0"
+                  />
+                  <span class="flex flex-col gap-0.5 min-w-0">
+                    <span class="ingredient-main text-[15px] leading-snug text-bone">
+                      <span
+                        class="ingredient-qty font-bold text-white tabular-nums"
+                        data-metric={ing.metric}
+                        data-us={ing.us}
+                        data-both-primary={ing.bothPrimary}
+                        data-both-secondary={ing.bothSecondary}
+                      >
+                        {ing.bothPrimary ?? ing.metric}{' '}
+                        <span class="qty-secondary">{ing.bothSecondary ?? `(${ing.us})`}</span>
+                      </span>{' '}
+                      {ing.name}
+                      {ing.dayTag && (
+                        <span class="ml-1.5 px-2 py-0.5 rounded-full bg-crimson/15 border border-crimson/35 font-mono text-[10px] font-bold uppercase tracking-wider text-crimson align-middle">
+                          {ing.dayTag}
+                        </span>
+                      )}
+                    </span>
+                    {ing.note && <span class="text-xs italic text-ash">{ing.note}</span>}
+                  </span>
+                </label>
+              </li>
+            ))}
+          </ul>
+        </aside>
+
+        <!-- Instructions Column -->
+        <section class="lg:col-span-7 p-6 sm:p-8 space-y-10">
+          <div class="flex items-baseline justify-between gap-2 pb-3 border-b-2 border-crimson">
+            <h2 class="font-mono text-xs font-bold uppercase tracking-[0.18em] text-crimson m-0">Instructions</h2>
+            <div class="flex items-center gap-2.5 font-mono text-xs text-ash no-print">
+              <span id="stepCounter" class="tabular-nums">0 / {totalSteps} done</span>
+              <button type="button" id="resetStepsBtn" hidden class="text-crimson underline cursor-pointer bg-transparent border-0 p-0 text-xs font-mono">Reset</button>
+            </div>
+          </div>
+
+          {r.parts.map((part, pIdx) => (
+            <div class:list={['space-y-4', pIdx > 0 && 'pt-8 border-t border-dashed border-white/15']}>
+              <h3 class="flex flex-wrap items-center gap-3 font-serif text-xl sm:text-2xl font-semibold text-bone m-0">
+                <span class="px-2.5 py-1 rounded-full bg-crimson/15 border border-crimson/35 font-mono text-[11px] font-bold uppercase tracking-wider text-crimson">
+                  {part.pill}
+                </span>
+                <span>{part.title}</span>
+              </h3>
+
+              <ol class="list-none p-0 m-0 space-y-3">
+                {part.steps.map((step, sIdx) => (
+                  <li
+                    class="step-card grid grid-cols-[34px_minmax(0,1fr)] gap-3.5 p-4 sm:p-5 rounded-2xl border border-white/[0.09] bg-white/[0.025] hover:border-white/25 hover:bg-white/[0.04] cursor-pointer transition"
+                    data-step-id={step.id}
+                    tabindex="0"
+                    role="checkbox"
+                    aria-checked="false"
+                  >
+                    <div class="step-num w-8 h-8 rounded-full bg-crimson/15 border border-crimson/40 text-crimson flex items-center justify-center font-mono text-xs font-bold shrink-0 transition">
+                      {sIdx + 1}
+                    </div>
+                    <div class="space-y-2">
+                      <h4 class="step-title text-base font-bold text-bone m-0 leading-snug">{step.title}</h4>
+                      <ul class="m-0 pl-4 space-y-1.5 text-sm text-bone/85 leading-relaxed marker:text-crimson">
+                        {step.bullets.map((b) => (
+                          <li set:html={b} />
+                        ))}
+                      </ul>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          ))}
+
+          <p class="no-print font-mono text-[11px] text-white/35 m-0">
+            TIP: Tap any step to check it off — progress saves automatically on this device.
+          </p>
+        </section>
+      </div>
+
+      <footer class="px-6 sm:px-10 py-4 bg-white/[0.02] border-t border-white/[0.08] flex flex-wrap items-center justify-between gap-2 font-mono text-xs text-white/35">
+        <span>{r.title}</span>
+        <span>soodey.com/recipes/{entry.id}/</span>
+      </footer>
+    </article>
+  </main>
+
+  <script>
+    function initRecipeCard() {
+      const card = document.querySelector('.recipe-shell') as HTMLElement | null;
+      if (!card) return;
+
+      const recipeId = card.dataset.recipeId || 'recipe';
+      const STORAGE_PREFIX = `soodey-recipe:${recipeId}:`;
+
+      const loadState = <T,>(key: string, fallback: T): T => {
+        try {
+          const raw = localStorage.getItem(STORAGE_PREFIX + key);
+          return raw ? JSON.parse(raw) : fallback;
+        } catch {
+          return fallback;
+        }
+      };
+
+      const saveState = (key: string, value: unknown) => {
+        try {
+          localStorage.setItem(STORAGE_PREFIX + key, JSON.stringify(value));
+        } catch {}
+      };
+
+      const unitBtns = Array.from(document.querySelectorAll('.unit-btn')) as HTMLButtonElement[];
+      const qtyEls = Array.from(document.querySelectorAll('.ingredient-qty')) as HTMLElement[];
+
+      function applyUnitMode(mode: string) {
+        unitBtns.forEach((btn) => {
+          btn.setAttribute('aria-pressed', String(btn.dataset.unitMode === mode));
+        });
+        qtyEls.forEach((el) => {
+          const metric = el.dataset.metric || '';
+          const us = el.dataset.us || '';
+          const bothPrimary = el.dataset.bothPrimary || metric;
+          const bothSecondary = el.dataset.bothSecondary || `(${us})`;
+          const inIngredients = Boolean(el.closest('.ingredient-item'));
+
+          if (mode === 'metric') {
+            el.textContent = metric;
+          } else if (mode === 'us') {
+            el.textContent = us;
+          } else if (inIngredients) {
+            el.innerHTML = `${bothPrimary} <span class="qty-secondary">${bothSecondary}</span>`;
+          } else {
+            el.textContent = `${bothPrimary} ${bothSecondary}`;
+          }
+        });
+        saveState('unitMode', mode);
+      }
+
+      applyUnitMode(loadState('unitMode', 'both'));
+      unitBtns.forEach((btn) => btn.addEventListener('click', () => applyUnitMode(btn.dataset.unitMode || 'both')));
+
+      const ingredientItems = Array.from(document.querySelectorAll('.ingredient-item')) as HTMLElement[];
+      const ingredientCounter = document.getElementById('ingredientCounter');
+      const resetIngredientsBtn = document.getElementById('resetIngredientsBtn') as HTMLButtonElement | null;
+      const checkedIngredients = new Set<string>(loadState<string[]>('ingredients', []));
+
+      const stepCards = Array.from(document.querySelectorAll('.step-card')) as HTMLElement[];
+      const stepCounter = document.getElementById('stepCounter');
+      const resetStepsBtn = document.getElementById('resetStepsBtn') as HTMLButtonElement | null;
+      const doneSteps = new Set<string>(loadState<string[]>('steps', []));
+
+      const overallBar = document.getElementById('overallProgressBar');
+      const overallLabel = document.getElementById('overallProgressLabel');
+
+      function updateOverall() {
+        const total = ingredientItems.length + stepCards.length;
+        const done = checkedIngredients.size + doneSteps.size;
+        const pct = total ? Math.round((done / total) * 100) : 0;
+        if (overallBar) overallBar.style.width = `${pct}%`;
+        if (overallLabel) overallLabel.textContent = `${pct}%`;
+      }
+
+      function renderIngredients() {
+        let count = 0;
+        ingredientItems.forEach((item) => {
+          const id = item.dataset.id || '';
+          const cb = item.querySelector('.ingredient-checkbox') as HTMLInputElement | null;
+          const isChecked = checkedIngredients.has(id);
+          if (cb) cb.checked = isChecked;
+          item.classList.toggle('is-checked', isChecked);
+          if (isChecked) count++;
+        });
+        if (ingredientCounter) ingredientCounter.textContent = `${count} / ${ingredientItems.length}`;
+        if (resetIngredientsBtn) resetIngredientsBtn.hidden = count === 0;
+        updateOverall();
+      }
+
+      ingredientItems.forEach((item) => {
+        const cb = item.querySelector('.ingredient-checkbox') as HTMLInputElement | null;
+        cb?.addEventListener('change', () => {
+          const id = item.dataset.id || '';
+          if (cb.checked) checkedIngredients.add(id);
+          else checkedIngredients.delete(id);
+          saveState('ingredients', Array.from(checkedIngredients));
+          renderIngredients();
+        });
+      });
+
+      resetIngredientsBtn?.addEventListener('click', () => {
+        checkedIngredients.clear();
+        saveState('ingredients', []);
+        renderIngredients();
+      });
+
+      function renderSteps() {
+        let count = 0;
+        stepCards.forEach((step) => {
+          const id = step.dataset.stepId || '';
+          const isDone = doneSteps.has(id);
+          step.classList.toggle('is-done', isDone);
+          step.setAttribute('aria-checked', String(isDone));
+          if (isDone) count++;
+        });
+        if (stepCounter) stepCounter.textContent = `${count} / ${stepCards.length} done`;
+        if (resetStepsBtn) resetStepsBtn.hidden = count === 0;
+        updateOverall();
+      }
+
+      function toggleStep(step: HTMLElement) {
+        const id = step.dataset.stepId || '';
+        if (doneSteps.has(id)) doneSteps.delete(id);
+        else doneSteps.add(id);
+        saveState('steps', Array.from(doneSteps));
+        renderSteps();
+      }
+
+      stepCards.forEach((step) => {
+        step.addEventListener('click', () => {
+          if (window.getSelection && window.getSelection()?.toString().trim()) return;
+          toggleStep(step);
+        });
+        step.addEventListener('keydown', (e) => {
+          if (e.key === ' ' || e.key === 'Enter') {
+            e.preventDefault();
+            toggleStep(step);
+          }
+        });
+      });
+
+      resetStepsBtn?.addEventListener('click', () => {
+        doneSteps.clear();
+        saveState('steps', []);
+        renderSteps();
+      });
+
+      renderIngredients();
+      renderSteps();
+
+      // Wake Lock Cook Mode
+      const wakeLockBtn = document.getElementById('wakeLockBtn') as HTMLButtonElement | null;
+      const wakeLockLabel = document.getElementById('wakeLockLabel');
+      let wakeLockSentinel: WakeLockSentinel | null = null;
+      let wakeLockDesired = false;
+
+      async function requestWakeLock() {
+        try {
+          wakeLockSentinel = await navigator.wakeLock.request('screen');
+          wakeLockBtn?.setAttribute('aria-pressed', 'true');
+          if (wakeLockLabel) wakeLockLabel.textContent = 'Screen Awake: On';
+          wakeLockSentinel.addEventListener('release', () => {
+            if (!wakeLockDesired) {
+              wakeLockBtn?.setAttribute('aria-pressed', 'false');
+              if (wakeLockLabel) wakeLockLabel.textContent = 'Screen Awake';
+            }
+          });
+        } catch {
+          wakeLockDesired = false;
+          wakeLockBtn?.setAttribute('aria-pressed', 'false');
+          if (wakeLockLabel) wakeLockLabel.textContent = 'Screen Awake';
+        }
+      }
+
+      wakeLockBtn?.addEventListener('click', async () => {
+        if (!('wakeLock' in navigator)) {
+          if (wakeLockLabel) wakeLockLabel.textContent = 'Not Supported';
+          setTimeout(() => { if (wakeLockLabel) wakeLockLabel.textContent = 'Screen Awake'; }, 1800);
+          return;
+        }
+        if (wakeLockDesired) {
+          wakeLockDesired = false;
+          if (wakeLockSentinel) {
+            await wakeLockSentinel.release();
+            wakeLockSentinel = null;
+          }
+          wakeLockBtn.setAttribute('aria-pressed', 'false');
+          if (wakeLockLabel) wakeLockLabel.textContent = 'Screen Awake';
+        } else {
+          wakeLockDesired = true;
+          await requestWakeLock();
+        }
+      });
+
+      document.addEventListener('visibilitychange', () => {
+        if (wakeLockDesired && document.visibilityState === 'visible') requestWakeLock();
+      });
+
+      document.getElementById('printBtn')?.addEventListener('click', () => window.print());
+    }
+
+    document.addEventListener('astro:page-load', initRecipeCard);
+    initRecipeCard();
+  </script>
+</BaseLayout>

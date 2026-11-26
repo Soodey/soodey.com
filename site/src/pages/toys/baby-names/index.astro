@@ -1,0 +1,508 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import ssaNames from '../../../data/baby-names.json';
+---
+
+<BaseLayout
+  title="Baby Name Roulette // SOODEY"
+  description="Consolidated baby name generator combining weighted SSA popularity data, Dota 2 hero lore, chaos mashups, custom last names, and shareable links."
+  showNav={true}
+  backHref="/gallery/"
+  backLabel="Gallery"
+  navSection="Baby Name Roulette"
+>
+  <canvas id="confettiCanvas" class="fixed inset-0 w-full h-full pointer-events-none z-50" aria-hidden="true"></canvas>
+
+  <main class="min-h-[calc(100dvh-4rem)] void-grid py-8 px-4 sm:px-8">
+    <div class="max-w-4xl mx-auto space-y-6 animate-rise">
+      <header class="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <div class="font-mono text-[11px] uppercase tracking-[0.2em] text-crimson">EP.04 // CONSOLIDATED ROULETTE</div>
+          <h1 class="font-display font-extrabold text-3xl sm:text-5xl text-bone tracking-tight mt-1">
+            Baby Name Roulette
+          </h1>
+        </div>
+        <button
+          id="shareLinkBtn"
+          type="button"
+          class="px-4 py-2 rounded-full border border-white/15 bg-white/[0.04] hover:border-crimson/60 font-mono text-xs text-bone cursor-pointer transition"
+        >
+          Copy Share Link
+        </button>
+      </header>
+
+      <!-- Main Reveal Stage -->
+      <section class="relative rounded-3xl bg-surface border border-white/12 p-7 sm:p-12 text-center overflow-hidden shadow-2xl">
+        <div
+          id="stageGlow"
+          class="pointer-events-none absolute inset-0 opacity-30 transition-all duration-500"
+          style="background: radial-gradient(circle at 50% 0%, rgba(255,34,68,0.35), transparent 65%);"
+        ></div>
+
+        <div class="relative z-10 space-y-5">
+          <div id="genderBadge" class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/[0.06] border border-white/15 font-mono text-xs uppercase tracking-[0.22em] text-ash">
+            READY TO ROLL
+          </div>
+
+          <div
+            id="resultName"
+            class="font-display font-extrabold tracking-tight text-bone leading-[1.08] min-h-[4.5rem] flex items-center justify-center transition-transform duration-200"
+            style="font-size: clamp(1.9rem, 5.5vw, 3.6rem);"
+          >
+            Hit Roll Below
+          </div>
+
+          <div id="resultMeta" class="font-mono text-xs text-ash min-h-[1.25rem]">
+            1,200 SSA weighted names · 124 Dota 2 heroes · customizable surname
+          </div>
+
+          <div class="flex flex-wrap items-center justify-center gap-3 pt-2">
+            <button
+              id="rollBtn"
+              type="button"
+              class="px-8 py-4 rounded-full bg-crimson hover:bg-crimson-glow text-white font-mono text-sm uppercase tracking-[0.2em] font-bold cursor-pointer shadow-[0_0_40px_rgba(255,34,68,0.4)] hover:scale-[1.02] active:scale-[0.98] transition"
+            >
+              Roll Name ↻
+            </button>
+            <button
+              id="saveFavBtn"
+              type="button"
+              disabled
+              class="px-5 py-4 rounded-full border border-white/15 bg-white/[0.04] hover:border-white/40 disabled:opacity-35 text-bone font-mono text-xs uppercase tracking-[0.16em] font-semibold cursor-pointer disabled:cursor-not-allowed transition"
+            >
+              ★ Shortlist
+            </button>
+            <button
+              id="copyNameBtn"
+              type="button"
+              disabled
+              class="px-5 py-4 rounded-full border border-white/15 bg-white/[0.04] hover:border-white/40 disabled:opacity-35 text-bone font-mono text-xs uppercase tracking-[0.16em] font-semibold cursor-pointer disabled:cursor-not-allowed transition"
+            >
+              Copy
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Controls Grid -->
+      <section class="rounded-2xl bg-surface border border-white/[0.09] p-5 sm:p-6 grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div class="space-y-4">
+          <div class="space-y-1.5">
+            <label for="lastNameInput" class="block font-mono text-[11px] uppercase tracking-[0.16em] text-ash">
+              Last Name (optional)
+            </label>
+            <input
+              id="lastNameInput"
+              type="text"
+              placeholder="e.g. Smith, Horvat, Skywalker..."
+              class="w-full px-4 py-2.5 rounded-xl bg-void border border-white/15 focus:border-crimson focus:outline-none text-sm text-bone placeholder:text-white/25"
+            />
+          </div>
+
+          <div class="space-y-1.5">
+            <span class="block font-mono text-[11px] uppercase tracking-[0.16em] text-ash">Mode</span>
+            <div class="grid grid-cols-2 gap-2" role="group" aria-label="Generator mode">
+              <button type="button" data-mode="ssa" class="mode-btn px-3 py-2 rounded-xl border border-crimson bg-crimson/15 text-bone font-mono text-xs font-semibold cursor-pointer transition">SSA Weighted</button>
+              <button type="button" data-mode="dota" class="mode-btn px-3 py-2 rounded-xl border border-white/12 bg-white/[0.03] text-ash hover:text-bone font-mono text-xs cursor-pointer transition">Dota 2 Lore</button>
+              <button type="button" data-mode="chaos" class="mode-btn px-3 py-2 rounded-xl border border-white/12 bg-white/[0.03] text-ash hover:text-bone font-mono text-xs cursor-pointer transition">Chaos Mashup</button>
+              <button type="button" data-mode="rare" class="mode-btn px-3 py-2 rounded-xl border border-white/12 bg-white/[0.03] text-ash hover:text-bone font-mono text-xs cursor-pointer transition">Deep Cuts</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="space-y-4">
+          <div class="space-y-1.5">
+            <span class="block font-mono text-[11px] uppercase tracking-[0.16em] text-ash">Gender Pool</span>
+            <div class="grid grid-cols-5 gap-1.5" role="group" aria-label="Gender filter">
+              <button type="button" data-gender="any" class="gender-btn px-2 py-2 rounded-xl border border-bone bg-bone text-void font-mono text-xs font-bold cursor-pointer transition">Any</button>
+              <button type="button" data-gender="boy" class="gender-btn px-2 py-2 rounded-xl border border-white/12 bg-white/[0.03] text-ash hover:text-bone font-mono text-xs cursor-pointer transition">Boy</button>
+              <button type="button" data-gender="girl" class="gender-btn px-2 py-2 rounded-xl border border-white/12 bg-white/[0.03] text-ash hover:text-bone font-mono text-xs cursor-pointer transition">Girl</button>
+              <button type="button" data-gender="unisex" class="gender-btn px-2 py-2 rounded-xl border border-white/12 bg-white/[0.03] text-ash hover:text-bone font-mono text-xs cursor-pointer transition">Unisex</button>
+              <button type="button" data-gender="wild" class="gender-btn px-2 py-2 rounded-xl border border-white/12 bg-white/[0.03] text-ash hover:text-bone font-mono text-xs cursor-pointer transition">Wild</button>
+            </div>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-5 pt-2">
+            <label class="inline-flex items-center gap-2 font-mono text-xs text-bone cursor-pointer">
+              <input id="middleToggle" type="checkbox" checked class="w-4 h-4 accent-[#ff2244] cursor-pointer" />
+              <span>Include Middle Name</span>
+            </label>
+            <label class="inline-flex items-center gap-2 font-mono text-xs text-bone cursor-pointer">
+              <input id="confettiToggle" type="checkbox" checked class="w-4 h-4 accent-[#ff2244] cursor-pointer" />
+              <span>Confetti Burst</span>
+            </label>
+          </div>
+
+          <p class="font-mono text-[11px] text-white/35 m-0 leading-relaxed">
+            Press <kbd class="px-1.5 py-0.5 rounded bg-white/10 text-bone">Space</kbd> anywhere to roll again. URL params sync automatically so you can send a custom link to expectant friends.
+          </p>
+        </div>
+      </section>
+
+      <!-- Shortlist / Favorites -->
+      <section id="favSection" class="rounded-2xl bg-surface border border-white/[0.09] p-5 space-y-3" hidden>
+        <div class="flex items-center justify-between">
+          <h2 class="font-mono text-xs uppercase tracking-[0.18em] text-crimson font-bold m-0">Shortlist</h2>
+          <button id="clearFavsBtn" type="button" class="font-mono text-xs text-ash hover:text-crimson underline bg-transparent border-0 cursor-pointer">Clear All</button>
+        </div>
+        <ul id="favList" class="list-none p-0 m-0 flex flex-wrap gap-2"></ul>
+      </section>
+    </div>
+  </main>
+
+  <script id="ssaData" type="application/json" set:html={JSON.stringify(ssaNames)}></script>
+
+  <script>
+    const DOTA_HEROES = {
+      boy: [
+        ['Abaddon', 'Lord of Avernus'], ['Razzil Darkbrew', 'Alchemist'], ['Kaldr', 'Ancient Apparition'],
+        ['Mogul Khan', 'Axe'], ['Karroch', 'Beastmaster'], ['Strygwyr', 'Bloodseeker'],
+        ['Gondar', 'Bounty Hunter'], ['Mangix', 'Brewmaster'], ['Rigwarl', 'Bristleback'],
+        ['Bradwarden', 'Centaur Warrunner'], ['Nessaj', 'Chaos Knight'], ['Chen', 'Holy Knight'],
+        ['Clinkz', 'Bone Fletcher'], ['Rattletrap', 'Clockwerk'], ["Ish'Kafel", 'Dark Seer'],
+        ['Lucifer', 'Doom'], ['Davion', 'Dragon Knight'], ['Kaolin', 'Earth Spirit'],
+        ['Raigor Stonehoof', 'Earthshaker'], ['Xin', 'Ember Spirit'], ['Darkterror', 'Faceless Void'],
+        ['Aurel', 'Gyrocopter'], ['Carl', 'Invoker'], ['Yurnero', 'Juggernaut'],
+        ['Ezalor', 'Keeper of the Light'], ['Kunkka', 'Admiral'], ['Ethreain', 'Lich'],
+        ["N'aix", 'Lifestealer'], ['Lion', 'Demon Witch'], ['Sylla', 'Lone Druid'],
+        ['Banehallow', 'Lycan'], ['Mars', 'First Son of Heaven'], ['Meepo', 'Geomancer'],
+        ['Sun Wukong', 'Monkey King'], ['Tequoia', "Nature's Prophet"], ["Rotund'jere", 'Necrophos'],
+        ['Balanar', 'Night Stalker'], ['Aggron Stonebreak', 'Ogre Magi'], ['Purist Thunderwrath', 'Omniknight'],
+        ['Nerif', 'Oracle'], ['Donté Panlin', 'Pangolier'], ['Azwraith', 'Phantom Lancer'],
+        ['Pudge', 'Butcher'], ['Riki', 'Stealth Assassin'], ['Rubick', 'Grand Magus'],
+        ['Crixalis', 'Sand King'], ['Rhasta', 'Shadow Shaman'], ['Nortrom', 'Silencer'],
+        ['Dragonus', 'Skywrath Mage'], ['Slardar', 'Slithereen Guard'], ['Kardel Sharpeye', 'Sniper'],
+        ['Barathrum', 'Spirit Breaker'], ['Raijin Thunderkeg', 'Storm Spirit'], ['Sven', 'Rogue Knight'],
+        ['Terrorblade', 'Demon Marauder'], ['Leviathan', 'Tidehunter'], ['Rizzrack', 'Timbersaw'],
+        ['Boush', 'Tinker'], ['Tiny', 'Stone Giant'], ['Rooftrellen', 'Treant Protector'],
+        ["Jah'rakal", 'Troll Warlord'], ['Ymir', 'Tusk'], ['Vrogros', 'Abyssal Underlord'],
+        ['Ulfsaar', 'Ursa Warrior'], ['Lesale', 'Venomancer'], ['Inai', 'Void Spirit'],
+        ['Demnok Lannik', 'Warlock'], ['Skitskurr', 'Weaver'], ['Zharvakko', 'Witch Doctor'],
+        ['Ostarion', 'Wraith King'], ['Zeus', 'Lord of Heaven'],
+      ],
+      girl: [
+        ['Black Arachnia', 'Broodmother'], ['Rylai', 'Crystal Maiden'], ['Mireska Sunbreeze', 'Dark Willow'],
+        ['Valora', 'Dawnbreaker'], ['Krobelus', 'Death Prophet'], ['Traxex', 'Drow Ranger'],
+        ['Aiushtha', 'Enchantress'], ['Hoodwink', 'Hoodwink'], ['Tresdin', 'Legion Commander'],
+        ['Lina', 'Slayer'], ['Luna', 'Moon Rider'], ['Marci', 'Unbreakable'],
+        ['Medusa', 'Gorgon'], ['Mirana', 'Princess of the Moon'], ['Muerta', 'Dead Reckoning'],
+        ['Slithice', 'Naga Siren'], ['Mortred', 'Phantom Assassin'], ['Akasha', 'Queen of Pain'],
+        ['Beatrix', 'Snapfire'], ['Mercurial', 'Spectre'], ['Lanaya', 'Templar Assassin'],
+        ['Shendelzare', 'Vengeful Spirit'], ['Lyralei', 'Windranger'], ['Auroth', 'Winter Wyvern'],
+      ],
+      wild: [
+        ['Zet', 'Arc Warden'], ['Atropos', 'Bane'], ['Enigma', 'Consumer of Worlds'],
+        ['Io', 'Wisp'], ['Morphling', 'Shapeshifter'], ['Harbinger', 'Outworld Destroyer'],
+        ['Icarus', 'Phoenix'], ['Puck', 'Faerie Dragon'], ['Razor', 'Lightning Revenant'],
+        ['Nevermore', 'Shadow Fiend'], ['Squee, Spleen, and Spoon', 'Techies'],
+      ],
+    };
+
+    function initBabyRoulette() {
+      const dataEl = document.getElementById('ssaData');
+      const rollBtn = document.getElementById('rollBtn') as HTMLButtonElement | null;
+      const lastNameInput = document.getElementById('lastNameInput') as HTMLInputElement | null;
+      const middleToggle = document.getElementById('middleToggle') as HTMLInputElement | null;
+      const confettiToggle = document.getElementById('confettiToggle') as HTMLInputElement | null;
+      const resultName = document.getElementById('resultName');
+      const resultMeta = document.getElementById('resultMeta');
+      const genderBadge = document.getElementById('genderBadge');
+      const stageGlow = document.getElementById('stageGlow') as HTMLElement | null;
+      const saveFavBtn = document.getElementById('saveFavBtn') as HTMLButtonElement | null;
+      const copyNameBtn = document.getElementById('copyNameBtn') as HTMLButtonElement | null;
+      const shareLinkBtn = document.getElementById('shareLinkBtn') as HTMLButtonElement | null;
+      const favSection = document.getElementById('favSection') as HTMLElement | null;
+      const favList = document.getElementById('favList') as HTMLElement | null;
+      const confettiCanvas = document.getElementById('confettiCanvas') as HTMLCanvasElement | null;
+
+      if (!dataEl || !rollBtn || !lastNameInput || !resultName || !resultMeta || !genderBadge || !confettiCanvas) return;
+
+      const ssa: { boy: [string, number][]; girl: [string, number][]; unisex: [string, number][] } = JSON.parse(
+        dataEl.textContent || '{"boy":[],"girl":[],"unisex":[]}'
+      );
+
+      let mode: 'ssa' | 'dota' | 'chaos' | 'rare' = 'ssa';
+      let gender: 'any' | 'boy' | 'girl' | 'unisex' | 'wild' = 'any';
+      let currentName = '';
+      let favorites: string[] = [];
+
+      try {
+        favorites = JSON.parse(localStorage.getItem('soodey-baby-favs') || '[]');
+      } catch {}
+
+      // Hydrate from URL params
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('last')) lastNameInput.value = params.get('last') || '';
+      if (['ssa', 'dota', 'chaos', 'rare'].includes(params.get('mode') || '')) mode = params.get('mode') as typeof mode;
+      if (['any', 'boy', 'girl', 'unisex', 'wild'].includes(params.get('gender') || '')) gender = params.get('gender') as typeof gender;
+
+      function syncUrl() {
+        const u = new URL(window.location.href);
+        if (lastNameInput!.value.trim()) u.searchParams.set('last', lastNameInput!.value.trim());
+        else u.searchParams.delete('last');
+        u.searchParams.set('mode', mode);
+        u.searchParams.set('gender', gender);
+        history.replaceState(null, '', u.toString());
+      }
+
+      function updateButtons() {
+        document.querySelectorAll('.mode-btn').forEach((b) => {
+          const on = (b as HTMLElement).dataset.mode === mode;
+          b.className = on
+            ? 'mode-btn px-3 py-2 rounded-xl border border-crimson bg-crimson/15 text-bone font-mono text-xs font-semibold cursor-pointer transition'
+            : 'mode-btn px-3 py-2 rounded-xl border border-white/12 bg-white/[0.03] text-ash hover:text-bone font-mono text-xs cursor-pointer transition';
+        });
+        document.querySelectorAll('.gender-btn').forEach((b) => {
+          const on = (b as HTMLElement).dataset.gender === gender;
+          b.className = on
+            ? 'gender-btn px-2 py-2 rounded-xl border border-bone bg-bone text-void font-mono text-xs font-bold cursor-pointer transition'
+            : 'gender-btn px-2 py-2 rounded-xl border border-white/12 bg-white/[0.03] text-ash hover:text-bone font-mono text-xs cursor-pointer transition';
+        });
+      }
+
+      function weightedPick(list: [string, number][], invert = false): [string, number] {
+        const weights = list.map(([, w]) => (invert ? Math.max(1, 25000 - w) : w));
+        const total = weights.reduce((a, b) => a + b, 0);
+        let r = Math.random() * total;
+        for (let i = 0; i < list.length; i++) {
+          r -= weights[i];
+          if (r <= 0) return list[i];
+        }
+        return list[0];
+      }
+
+      function pickOne<T>(arr: T[]): T {
+        return arr[Math.floor(Math.random() * arr.length)];
+      }
+
+      function generateCandidate() {
+        const last = lastNameInput!.value.trim();
+        let g: 'boy' | 'girl' | 'unisex' | 'wild';
+        if (gender === 'any') {
+          const r = Math.random();
+          g = mode === 'dota' || mode === 'chaos' ? (r < 0.45 ? 'boy' : r < 0.9 ? 'girl' : 'wild') : (r < 0.5 ? 'boy' : 'girl');
+        } else {
+          g = gender;
+        }
+
+        const badgeMap = {
+          boy: { label: "IT'S A BOY", color: '#38bdf8', glow: 'rgba(56,189,248,0.34)' },
+          girl: { label: "IT'S A GIRL", color: '#f43f5e', glow: 'rgba(244,63,94,0.34)' },
+          unisex: { label: 'UNISEX CLASSIC', color: '#f59e0b', glow: 'rgba(245,158,11,0.34)' },
+          wild: { label: "IT'S... CONFUSING", color: '#c084fc', glow: 'rgba(192,132,252,0.36)' },
+        };
+
+        // Legacy Easter egg from gina_baby/karla_baby's hardcoded `return 'Vinny';`
+        if (mode === 'chaos' && Math.random() < 0.025) {
+          return {
+            full: `Vinny "Legacy Easter Egg"${last ? ' ' + last : ''}`,
+            meta: 'Rare 2020 archive Easter egg unlocked!',
+            badge: badgeMap.wild,
+          };
+        }
+
+        const includeMiddle = middleToggle?.checked ?? true;
+        let full = '';
+        let meta = '';
+
+        if (mode === 'dota' || g === 'wild') {
+          const heroKey: 'boy' | 'girl' | 'wild' = g === 'unisex' ? (Math.random() < 0.5 ? 'boy' : 'girl') : g;
+          const pool = DOTA_HEROES[heroKey];
+          const [firstName] = pickOne(pool);
+          const [, title] = pickOne(pool);
+          full = includeMiddle ? `${firstName} "${title}"${last ? ' ' + last : ''}` : `${firstName}${last ? ' ' + last : ''}`;
+          meta = `Dota 2 Lore Pool (${pool.length} heroes)`;
+        } else if (mode === 'chaos') {
+          const ssaPool = ssa[g];
+          const [first] = weightedPick(ssaPool);
+          const heroPool = g === 'unisex'
+            ? [...DOTA_HEROES.boy, ...DOTA_HEROES.girl, ...DOTA_HEROES.wild]
+            : [...DOTA_HEROES[g], ...DOTA_HEROES.wild];
+          const [, title] = pickOne(heroPool);
+          full = `${first} "${title}"${last ? ' ' + last : ''}`;
+          meta = 'Chaos Mashup · SSA First + Dota Lore Title';
+        } else {
+          const basePool = ssa[g];
+          const ssaPool = mode === 'rare' && basePool.length > 300 ? basePool.slice(250) : basePool;
+          const [first, rankW] = weightedPick(ssaPool, mode === 'rare');
+          let mid = '';
+          if (includeMiddle) {
+            do {
+              mid = weightedPick(ssaPool, mode === 'rare')[0];
+            } while (mid === first);
+          }
+          full = [first, mid, last].filter(Boolean).join(' ');
+          const rankIdx = basePool.findIndex(([n]) => n === first) + 1;
+          meta = `${mode === 'rare' ? 'Deep Cut' : g === 'unisex' ? 'Unisex Crossover' : 'SSA Weighted'} · #${rankIdx} (${rankW.toLocaleString()} births)`;
+        }
+
+        return { full, meta, badge: badgeMap[g] };
+      }
+
+      // Lightweight native Canvas confetti
+      const cCtx = confettiCanvas.getContext('2d')!;
+      interface Piece { x: number; y: number; vx: number; vy: number; size: number; color: string; rot: number; vr: number; life: number; }
+      let pieces: Piece[] = [];
+      let confettiRaf = 0;
+
+      function launchConfetti(primaryColor: string) {
+        if (!confettiToggle?.checked) return;
+        confettiCanvas!.width = window.innerWidth;
+        confettiCanvas!.height = window.innerHeight;
+        const palette = [primaryColor, '#f4f3ef', '#fbbf24', '#ff2244'];
+        for (let i = 0; i < 85; i++) {
+          const ang = -Math.PI / 2 + (Math.random() - 0.5) * 1.4;
+          const spd = 6 + Math.random() * 12;
+          pieces.push({
+            x: window.innerWidth / 2,
+            y: window.innerHeight * 0.42,
+            vx: Math.cos(ang) * spd,
+            vy: Math.sin(ang) * spd - 2,
+            size: 5 + Math.random() * 6,
+            color: palette[i % palette.length],
+            rot: Math.random() * Math.PI * 2,
+            vr: (Math.random() - 0.5) * 0.25,
+            life: 1,
+          });
+        }
+        if (!confettiRaf) tickConfetti();
+      }
+
+      function tickConfetti() {
+        cCtx.clearRect(0, 0, confettiCanvas!.width, confettiCanvas!.height);
+        for (let i = pieces.length - 1; i >= 0; i--) {
+          const p = pieces[i];
+          p.x += p.vx;
+          p.y += p.vy;
+          p.vy += 0.28;
+          p.rot += p.vr;
+          p.life -= 0.011;
+          if (p.life <= 0 || p.y > confettiCanvas!.height + 20) {
+            pieces.splice(i, 1);
+            continue;
+          }
+          cCtx.save();
+          cCtx.translate(p.x, p.y);
+          cCtx.rotate(p.rot);
+          cCtx.globalAlpha = Math.min(1, p.life * 1.6);
+          cCtx.fillStyle = p.color;
+          cCtx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.6);
+          cCtx.restore();
+        }
+        if (pieces.length > 0) confettiRaf = requestAnimationFrame(tickConfetti);
+        else confettiRaf = 0;
+      }
+
+      function renderFavs() {
+        if (!favSection || !favList) return;
+        favSection.hidden = favorites.length === 0;
+        favList.innerHTML = '';
+        favorites.forEach((name, idx) => {
+          const li = document.createElement('li');
+          li.className = 'inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/[0.05] border border-white/12 text-xs font-mono text-bone';
+          li.innerHTML = `<span>${name}</span>`;
+          const rm = document.createElement('button');
+          rm.type = 'button';
+          rm.textContent = '×';
+          rm.className = 'text-ash hover:text-crimson bg-transparent border-0 cursor-pointer text-sm leading-none';
+          rm.addEventListener('click', () => {
+            favorites.splice(idx, 1);
+            try { localStorage.setItem('soodey-baby-favs', JSON.stringify(favorites)); } catch {}
+            renderFavs();
+          });
+          li.appendChild(rm);
+          favList.appendChild(li);
+        });
+      }
+
+      function roll() {
+        syncUrl();
+        let ticks = 0;
+        const spin = window.setInterval(() => {
+          const preview = generateCandidate();
+          resultName!.textContent = preview.full;
+          ticks++;
+          if (ticks >= 7) {
+            clearInterval(spin);
+            const final = generateCandidate();
+            currentName = final.full;
+            resultName!.textContent = final.full;
+            resultMeta!.textContent = final.meta;
+            genderBadge!.textContent = final.badge.label;
+            genderBadge!.style.color = final.badge.color;
+            genderBadge!.style.borderColor = `${final.badge.color}66`;
+            if (stageGlow) {
+              stageGlow.style.background = `radial-gradient(circle at 50% 0%, ${final.badge.glow}, transparent 68%)`;
+            }
+            if (saveFavBtn) saveFavBtn.disabled = false;
+            if (copyNameBtn) copyNameBtn.disabled = false;
+            launchConfetti(final.badge.color);
+          }
+        }, 40);
+      }
+
+      rollBtn.addEventListener('click', roll);
+      lastNameInput.addEventListener('input', syncUrl);
+
+      document.querySelectorAll('.mode-btn').forEach((b) => {
+        b.addEventListener('click', () => {
+          mode = ((b as HTMLElement).dataset.mode as typeof mode) || 'ssa';
+          updateButtons();
+          syncUrl();
+        });
+      });
+
+      document.querySelectorAll('.gender-btn').forEach((b) => {
+        b.addEventListener('click', () => {
+          gender = ((b as HTMLElement).dataset.gender as typeof gender) || 'any';
+          updateButtons();
+          syncUrl();
+        });
+      });
+
+      saveFavBtn?.addEventListener('click', () => {
+        if (!currentName || favorites.includes(currentName)) return;
+        favorites.unshift(currentName);
+        try { localStorage.setItem('soodey-baby-favs', JSON.stringify(favorites)); } catch {}
+        renderFavs();
+      });
+
+      document.getElementById('clearFavsBtn')?.addEventListener('click', () => {
+        favorites = [];
+        try { localStorage.setItem('soodey-baby-favs', '[]'); } catch {}
+        renderFavs();
+      });
+
+      copyNameBtn?.addEventListener('click', async () => {
+        if (!currentName) return;
+        try {
+          await navigator.clipboard.writeText(currentName);
+          copyNameBtn.textContent = 'Copied!';
+          setTimeout(() => (copyNameBtn.textContent = 'Copy'), 1400);
+        } catch {}
+      });
+
+      shareLinkBtn?.addEventListener('click', async () => {
+        syncUrl();
+        try {
+          await navigator.clipboard.writeText(window.location.href);
+          shareLinkBtn.textContent = 'Link Copied!';
+          setTimeout(() => (shareLinkBtn.textContent = 'Copy Share Link'), 1600);
+        } catch {}
+      });
+
+      window.addEventListener('keydown', (e) => {
+        if (e.code === 'Space' && document.activeElement?.tagName !== 'INPUT') {
+          e.preventDefault();
+          roll();
+        }
+      });
+
+      updateButtons();
+      renderFavs();
+    }
+
+    document.addEventListener('astro:page-load', initBabyRoulette);
+    initBabyRoulette();
+  </script>
+</BaseLayout>

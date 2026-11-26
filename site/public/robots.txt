@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+Disallow: /zool_baby/
+Disallow: /karla_baby/

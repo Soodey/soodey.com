@@ -1,0 +1,285 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="ASCII Machine // SOODEY"
+  description="Drop any image to generate crisp high-contrast ASCII art in the browser. Copy text or export PNG."
+  showNav={true}
+  backHref="/gallery/"
+  backLabel="Gallery"
+  navSection="ASCII Machine"
+>
+  <main class="min-h-[calc(100dvh-4rem)] void-grid py-8 px-4 sm:px-8">
+    <div class="max-w-7xl mx-auto space-y-6 animate-rise">
+      <header class="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <div class="font-mono text-[11px] uppercase tracking-[0.2em] text-crimson">EP.05 // IMAGE → ASCII</div>
+          <h1 class="font-display font-extrabold text-3xl sm:text-5xl text-bone tracking-tight mt-1">ASCII Machine</h1>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <button type="button" data-preset="skull" class="preset-btn px-3.5 py-2 rounded-full bg-white/[0.05] hover:bg-white/10 border border-white/12 font-mono text-xs text-bone cursor-pointer transition">Demo: Skull</button>
+          <button type="button" data-preset="rings" class="preset-btn px-3.5 py-2 rounded-full bg-white/[0.05] hover:bg-white/10 border border-white/12 font-mono text-xs text-bone cursor-pointer transition">Demo: Vortex</button>
+          <label class="px-4 py-2 rounded-full bg-crimson hover:bg-crimson-glow text-white font-mono text-xs uppercase tracking-wider font-bold cursor-pointer transition">
+            Upload Photo
+            <input id="fileInput" type="file" accept="image/*" class="hidden" />
+          </label>
+        </div>
+      </header>
+
+      <!-- Controls -->
+      <section class="rounded-2xl bg-surface border border-white/[0.09] p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 items-center">
+        <label class="space-y-1.5 font-mono text-xs text-ash">
+          <div class="flex justify-between"><span>WIDTH</span><span id="widthVal" class="text-bone">96 cols</span></div>
+          <input id="widthRange" type="range" min="40" max="150" value="96" class="w-full accent-[#ff2244]" />
+        </label>
+
+        <label class="space-y-1.5 font-mono text-xs text-ash">
+          <div class="flex justify-between"><span>CONTRAST</span><span id="contrastVal" class="text-bone">1.2x</span></div>
+          <input id="contrastRange" type="range" min="0.6" max="2.4" step="0.1" value="1.2" class="w-full accent-[#ff2244]" />
+        </label>
+
+        <label class="space-y-1.5 font-mono text-xs text-ash">
+          <span>CHARSET</span>
+          <select id="charsetSelect" class="w-full px-3 py-2 rounded-lg bg-void border border-white/15 text-bone text-xs font-mono">
+            <option value="dense">Dense (@%#*+=-:. )</option>
+            <option value="blocks">Blocks (█▓▒░ )</option>
+            <option value="binary">Binary (10 )</option>
+            <option value="retro">Slash (/#\+:-. )</option>
+          </select>
+        </label>
+
+        <label class="space-y-1.5 font-mono text-xs text-ash">
+          <span>TINT</span>
+          <select id="tintSelect" class="w-full px-3 py-2 rounded-lg bg-void border border-white/15 text-bone text-xs font-mono">
+            <option value="crimson">LD+R Crimson</option>
+            <option value="bone">Bone White</option>
+            <option value="matrix">Phosphor Green</option>
+            <option value="cyan">Electric Cyan</option>
+          </select>
+        </label>
+
+        <div class="flex items-center gap-2 pt-3 sm:pt-0">
+          <button id="copyAsciiBtn" type="button" class="flex-1 px-3 py-2.5 rounded-xl bg-white/[0.06] hover:bg-white/12 border border-white/15 font-mono text-xs text-bone font-semibold cursor-pointer transition">Copy Text</button>
+          <button id="dlAsciiBtn" type="button" class="flex-1 px-3 py-2.5 rounded-xl bg-bone text-void font-mono text-xs font-bold cursor-pointer hover:opacity-90 transition">PNG</button>
+        </div>
+      </section>
+
+      <!-- Drop Zone & Output -->
+      <section
+        id="dropZone"
+        class="rounded-2xl bg-[#050507] border border-white/12 p-4 sm:p-6 overflow-x-auto min-h-[380px] flex items-center justify-center relative"
+      >
+        <pre
+          id="asciiOut"
+          class="font-mono text-[6px] sm:text-[8px] leading-[1.05] tracking-[0.06em] whitespace-pre m-0 select-all"
+          style="color:#ff2244;"
+        ></pre>
+      </section>
+
+      <p class="font-mono text-[11px] text-white/35 text-center m-0">
+        100% client-side in your browser — images never leave your device. Drag &amp; drop any photo onto the box above.
+      </p>
+    </div>
+  </main>
+
+  <script>
+    function initAscii() {
+      const asciiOut = document.getElementById('asciiOut') as HTMLPreElement | null;
+      const dropZone = document.getElementById('dropZone') as HTMLElement | null;
+      const fileInput = document.getElementById('fileInput') as HTMLInputElement | null;
+      const widthRange = document.getElementById('widthRange') as HTMLInputElement | null;
+      const contrastRange = document.getElementById('contrastRange') as HTMLInputElement | null;
+      const charsetSelect = document.getElementById('charsetSelect') as HTMLSelectElement | null;
+      const tintSelect = document.getElementById('tintSelect') as HTMLSelectElement | null;
+      const widthVal = document.getElementById('widthVal')!;
+      const contrastVal = document.getElementById('contrastVal')!;
+      if (!asciiOut || !dropZone || !widthRange || !contrastRange || !charsetSelect || !tintSelect) return;
+
+      const CHARSETS: Record<string, string> = {
+        dense: ' .:-=+*#%@',
+        blocks: ' ░▒▓█',
+        binary: ' 01',
+        retro: ' .:-+\\/#',
+      };
+
+      const TINTS: Record<string, string> = {
+        crimson: '#ff2244',
+        bone: '#f4f3ef',
+        matrix: '#4ade80',
+        cyan: '#22d3ee',
+      };
+
+      const offCanvas = document.createElement('canvas');
+      const offCtx = offCanvas.getContext('2d', { willReadFrequently: true })!;
+      let sourceCanvas = document.createElement('canvas');
+      sourceCanvas.width = 320;
+      sourceCanvas.height = 240;
+
+      function drawPreset(kind: string) {
+        const sCtx = sourceCanvas.getContext('2d')!;
+        const w = sourceCanvas.width;
+        const h = sourceCanvas.height;
+        sCtx.fillStyle = '#000';
+        sCtx.fillRect(0, 0, w, h);
+
+        if (kind === 'skull') {
+          // Bold graphic skull silhouette + gradient shading
+          const g = sCtx.createRadialGradient(w * 0.5, h * 0.42, 12, w * 0.5, h * 0.48, 115);
+          g.addColorStop(0, '#ffffff');
+          g.addColorStop(0.65, '#bbbbbb');
+          g.addColorStop(1, '#111111');
+          sCtx.fillStyle = g;
+          sCtx.beginPath();
+          sCtx.arc(w * 0.5, h * 0.42, 76, 0, Math.PI * 2);
+          sCtx.fill();
+          sCtx.fillRect(w * 0.5 - 42, h * 0.56, 84, 52);
+
+          // Eyes + nose
+          sCtx.fillStyle = '#000';
+          sCtx.beginPath();
+          sCtx.ellipse(w * 0.5 - 28, h * 0.45, 19, 22, -0.15, 0, Math.PI * 2);
+          sCtx.ellipse(w * 0.5 + 28, h * 0.45, 19, 22, 0.15, 0, Math.PI * 2);
+          sCtx.fill();
+          sCtx.beginPath();
+          sCtx.moveTo(w * 0.5, h * 0.53);
+          sCtx.lineTo(w * 0.5 - 12, h * 0.67);
+          sCtx.lineTo(w * 0.5 + 12, h * 0.67);
+          sCtx.closePath();
+          sCtx.fill();
+
+          // Teeth slits
+          sCtx.lineWidth = 4;
+          sCtx.strokeStyle = '#000';
+          for (let tx = -24; tx <= 24; tx += 12) {
+            sCtx.beginPath();
+            sCtx.moveTo(w * 0.5 + tx, h * 0.72);
+            sCtx.lineTo(w * 0.5 + tx, h * 0.8);
+            sCtx.stroke();
+          }
+        } else {
+          // Optical vortex interference pattern
+          for (let y = 0; y < h; y += 2) {
+            for (let x = 0; x < w; x += 2) {
+              const dx = (x - w / 2) / 90;
+              const dy = (y - h / 2) / 90;
+              const dist = Math.hypot(dx, dy);
+              const ang = Math.atan2(dy, dx);
+              const v = Math.sin(dist * 10 - ang * 3) * 0.5 + 0.5;
+              const fade = Math.max(0, 1 - dist * 0.48);
+              const lum = Math.floor(v * fade * 255);
+              sCtx.fillStyle = `rgb(${lum},${lum},${lum})`;
+              sCtx.fillRect(x, y, 2, 2);
+            }
+          }
+        }
+        renderAscii();
+      }
+
+      function renderAscii() {
+        const cols = parseInt(widthRange!.value, 10);
+        const contrast = parseFloat(contrastRange!.value);
+        const chars = CHARSETS[charsetSelect!.value] || CHARSETS.dense;
+        widthVal.textContent = `${cols} cols`;
+        contrastVal.textContent = `${contrast.toFixed(1)}x`;
+        asciiOut!.style.color = TINTS[tintSelect!.value] || '#ff2244';
+
+        const aspect = sourceCanvas.height / sourceCanvas.width;
+        const rows = Math.max(12, Math.round(cols * aspect * 0.52));
+        offCanvas.width = cols;
+        offCanvas.height = rows;
+        offCtx.drawImage(sourceCanvas, 0, 0, cols, rows);
+
+        const data = offCtx.getImageData(0, 0, cols, rows).data;
+        let out = '';
+        for (let y = 0; y < rows; y++) {
+          for (let x = 0; x < cols; x++) {
+            const idx = (y * cols + x) * 4;
+            let lum = (0.299 * data[idx] + 0.587 * data[idx + 1] + 0.114 * data[idx + 2]) / 255;
+            lum = Math.max(0, Math.min(1, (lum - 0.5) * contrast + 0.5));
+            const ci = Math.min(chars.length - 1, Math.floor(lum * chars.length));
+            out += chars[ci];
+          }
+          out += '\n';
+        }
+        asciiOut!.textContent = out;
+      }
+
+      function loadFile(file: File) {
+        const url = URL.createObjectURL(file);
+        const img = new Image();
+        img.onload = () => {
+          const maxDim = 480;
+          const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+          sourceCanvas.width = Math.max(40, Math.round(img.width * scale));
+          sourceCanvas.height = Math.max(40, Math.round(img.height * scale));
+          sourceCanvas.getContext('2d')!.drawImage(img, 0, 0, sourceCanvas.width, sourceCanvas.height);
+          URL.revokeObjectURL(url);
+          renderAscii();
+        };
+        img.src = url;
+      }
+
+      widthRange.addEventListener('input', renderAscii);
+      contrastRange.addEventListener('input', renderAscii);
+      charsetSelect.addEventListener('change', renderAscii);
+      tintSelect.addEventListener('change', renderAscii);
+
+      fileInput?.addEventListener('change', () => {
+        if (fileInput.files?.[0]) loadFile(fileInput.files[0]);
+      });
+
+      dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.style.borderColor = '#ff2244';
+      });
+      dropZone.addEventListener('dragleave', () => {
+        dropZone.style.borderColor = '';
+      });
+      dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.style.borderColor = '';
+        if (e.dataTransfer?.files?.[0]) loadFile(e.dataTransfer.files[0]);
+      });
+
+      document.querySelectorAll('.preset-btn').forEach((btn) => {
+        btn.addEventListener('click', () => drawPreset((btn as HTMLElement).dataset.preset || 'skull'));
+      });
+
+      const copyBtn = document.getElementById('copyAsciiBtn');
+      copyBtn?.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(asciiOut.textContent || '');
+          copyBtn.textContent = 'Copied!';
+          setTimeout(() => (copyBtn.textContent = 'Copy Text'), 1500);
+        } catch {}
+      });
+
+      document.getElementById('dlAsciiBtn')?.addEventListener('click', () => {
+        const lines = (asciiOut.textContent || '').split('\n');
+        const exportCanvas = document.createElement('canvas');
+        const fontSize = 14;
+        const lineH = 15;
+        const charW = 8.4;
+        const pad = 28;
+        exportCanvas.width = Math.ceil((lines[0]?.length || 80) * charW + pad * 2);
+        exportCanvas.height = Math.ceil(lines.length * lineH + pad * 2);
+        const eCtx = exportCanvas.getContext('2d')!;
+        eCtx.fillStyle = '#060607';
+        eCtx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
+        eCtx.fillStyle = TINTS[tintSelect.value] || '#ff2244';
+        eCtx.font = `${fontSize}px "JetBrains Mono", monospace`;
+        lines.forEach((line, i) => eCtx.fillText(line, pad, pad + (i + 1) * lineH));
+        const a = document.createElement('a');
+        a.download = 'soodey-ascii.png';
+        a.href = exportCanvas.toDataURL('image/png');
+        a.click();
+      });
+
+      drawPreset('skull');
+    }
+
+    document.addEventListener('astro:page-load', initAscii);
+    initAscii();
+  </script>
+</BaseLayout>

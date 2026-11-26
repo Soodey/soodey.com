@@ -1,0 +1,86 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const recipes = (await getCollection('recipes')).sort((a, b) =>
+  b.data.datePublished.localeCompare(a.data.datePublished)
+);
+const leadImage = recipes[0]?.data.image;
+---
+
+<BaseLayout
+  title="Recipes // SOODEY"
+  description="Clean, tested recipes without the 2,000-word life story. Straight to ingredients, weights, and steps."
+  ogSiteName="Soodey's Kitchen"
+  ogImage={leadImage ? `https://soodey.com${leadImage.src}` : undefined}
+  ogImageAlt={leadImage?.alt}
+  ogImageWidth={leadImage?.width}
+  ogImageHeight={leadImage?.height}
+  showNav={true}
+  backHref="/gallery/"
+  backLabel="Gallery"
+  navSection="Recipes"
+>
+  <main class="min-h-[calc(100dvh-4rem)] void-grid">
+    <div class="max-w-7xl mx-auto px-5 sm:px-8 pt-10 pb-24 space-y-10">
+      <header class="pb-8 border-b border-white/[0.08] flex flex-col sm:flex-row sm:items-end justify-between gap-4 animate-rise">
+        <div class="space-y-2">
+          <div class="font-mono text-[11px] uppercase tracking-[0.22em] text-crimson flex items-center gap-2">
+            <span class="w-1.5 h-1.5 rounded-full bg-crimson"></span>
+            <span>Zero Life Stories · Gram Weights · Cook Mode</span>
+          </div>
+          <h1 class="font-display font-extrabold text-4xl sm:text-6xl tracking-[-0.03em] text-bone leading-none">
+            RECIPES
+          </h1>
+        </div>
+        <p class="text-sm text-ash max-w-md m-0">
+          No popups, no jump-to-recipe button needed. Dialed-in weights, checkable steps, and screen wake lock.
+        </p>
+      </header>
+
+      <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" aria-label="Recipe collection">
+        {recipes.map((entry, idx) => {
+          const r = entry.data;
+          return (
+            <a
+              href={`/recipes/${entry.id}/`}
+              class="kinetic-card group flex flex-col rounded-2xl bg-surface border border-white/[0.09] animate-rise"
+              style={`animation-delay: ${idx * 70}ms;`}
+            >
+              <div class="relative aspect-[16/10] overflow-hidden bg-elevated border-b border-white/[0.07]">
+                <img
+                  src={r.image.src}
+                  alt={r.image.alt}
+                  class="w-full h-full object-cover transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.05]"
+                  loading="eager"
+                />
+                <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent"></div>
+                <span class="absolute top-3 left-3 px-2.5 py-1 rounded-md bg-black/75 backdrop-blur-md border border-white/15 font-mono text-[10px] uppercase tracking-[0.14em] text-crimson font-semibold">
+                  {r.category}
+                </span>
+              </div>
+
+              <div class="p-6 flex-1 flex flex-col justify-between gap-5">
+                <div class="space-y-2">
+                  <h2 class="font-serif text-2xl font-semibold leading-snug text-bone group-hover:text-white transition">
+                    {r.title}
+                  </h2>
+                  <p class="text-sm text-ash leading-relaxed m-0">
+                    {r.subtitle}
+                  </p>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-x-4 gap-y-2 pt-4 border-t border-white/[0.08] font-mono text-[11px] text-white/45">
+                  <span>Prep {r.prepTime}</span>
+                  <span>Cook {r.cookTime}</span>
+                  <span>{r.yieldShort}</span>
+                  <span class="ml-auto text-crimson font-semibold group-hover:translate-x-1 transition-transform">Open →</span>
+                </div>
+              </div>
+            </a>
+          );
+        })}
+      </section>
+    </div>
+  </main>
+</BaseLayout>
