@@ -7,6 +7,29 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   description="soodey.com"
   ogImage="https://soodey.com/recipes/thanksgiving-mac-and-cheese/thanksgiving-mac-and-cheese.jpg"
 >
+  <Fragment slot="head">
+    <style>
+      @keyframes eqBar {
+        0%, 100% { transform: scaleY(0.32); }
+        50% { transform: scaleY(1); }
+      }
+      .eq-bar {
+        transform-origin: bottom;
+        transition: transform 0.2s ease, opacity 0.2s ease;
+      }
+      .is-playing .eq-bar {
+        animation: eqBar 0.85s ease-in-out infinite;
+      }
+      .is-playing .eq-bar:nth-child(2) { animation-delay: 0.18s; animation-duration: 0.65s; }
+      .is-playing .eq-bar:nth-child(3) { animation-delay: 0.34s; animation-duration: 0.95s; }
+      .is-playing .eq-bar:nth-child(4) { animation-delay: 0.1s; animation-duration: 0.72s; }
+      :not(.is-playing) .eq-bar {
+        transform: scaleY(0.28);
+        opacity: 0.45;
+      }
+    </style>
+  </Fragment>
+
   <main class="relative min-h-[100dvh] w-full overflow-hidden flex flex-col items-center justify-center px-6 select-none">
     <!-- Real-time WebGL Volumetric Fluid / Smoke Shader -->
     <canvas
@@ -44,6 +67,27 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         </a>
       </div>
     </div>
+
+    <!-- Subtle Floating Audio Toggle -->
+    <button
+      id="musicToggle"
+      type="button"
+      aria-pressed="false"
+      aria-label="Toggle background music"
+      class="fixed bottom-6 right-6 z-20 inline-flex items-center gap-2.5 px-4 py-2 rounded-full border border-white/15 bg-white/[0.05] hover:border-white/35 hover:bg-white/[0.1] backdrop-blur-xl text-xs font-medium text-bone/85 cursor-pointer transition"
+    >
+      <span class="inline-flex items-end gap-[2.5px] h-3.5" aria-hidden="true">
+        <span class="eq-bar w-[2px] h-full rounded-full bg-bone"></span>
+        <span class="eq-bar w-[2px] h-full rounded-full bg-bone"></span>
+        <span class="eq-bar w-[2px] h-full rounded-full bg-bone"></span>
+        <span class="eq-bar w-[2px] h-full rounded-full bg-bone"></span>
+      </span>
+      <span id="musicLabel">Sound</span>
+    </button>
+
+    <audio id="introAudio" loop preload="auto">
+      <source src="/audio/intro_music.mp3" type="audio/mpeg" />
+    </audio>
   </main>
 
   <script>
@@ -56,7 +100,82 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       }
 
       const canvas = document.getElementById('voidCanvas') as HTMLCanvasElement | null;
+      const audio = document.getElementById('introAudio') as HTMLAudioElement | null;
+      const musicBtn = document.getElementById('musicToggle') as HTMLButtonElement | null;
+      const musicLabel = document.getElementById('musicLabel');
       if (!canvas) return;
+
+      let audioPlaying = false;
+      let userMuted = false;
+      let audioCtx: AudioContext | null = null;
+      let analyser: AnalyserNode | null = null;
+      let freqData: Uint8Array | null = null;
+
+      function syncMusicUi(playing: boolean) {
+        audioPlaying = playing;
+        musicBtn?.classList.toggle('is-playing', playing);
+        musicBtn?.setAttribute('aria-pressed', String(playing));
+        if (musicLabel) musicLabel.textContent = playing ? 'Sound On' : 'Sound Off';
+      }
+
+      function connectAnalyser() {
+        if (!audio || analyser) return;
+        try {
+          const Ctx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+          audioCtx = new Ctx();
+          const src = audioCtx.createMediaElementSource(audio);
+          analyser = audioCtx.createAnalyser();
+          analyser.fftSize = 64;
+          freqData = new Uint8Array(analyser.frequencyBinCount);
+          src.connect(analyser);
+          analyser.connect(audioCtx.destination);
+        } catch {}
+      }
+
+      async function startMusic() {
+        if (!audio || audioPlaying) return;
+        try {
+          connectAnalyser();
+          if (audioCtx?.state === 'suspended') await audioCtx.resume();
+          await audio.play();
+          syncMusicUi(true);
+        } catch {
+          syncMusicUi(false);
+        }
+      }
+
+      function stopMusic() {
+        if (!audio) return;
+        audio.pause();
+        syncMusicUi(false);
+      }
+
+      // Attempt immediate playback; if browser blocks autoplay, start seamlessly on first click/tap/keypress
+      startMusic();
+
+      const onFirstGesture = (e: Event) => {
+        if (userMuted || audioPlaying) return;
+        // Don't double-toggle if they clicked the music button itself
+        if (musicBtn && e.target instanceof Node && musicBtn.contains(e.target)) return;
+        // Don't start if they clicked directly on Enter -> Gallery
+        const cta = document.getElementById('magneticCta');
+        if (cta && e.target instanceof Node && cta.contains(e.target)) return;
+        startMusic();
+      };
+
+      const onMusicClick = () => {
+        if (audioPlaying) {
+          userMuted = true;
+          stopMusic();
+        } else {
+          userMuted = false;
+          startMusic();
+        }
+      };
+
+      window.addEventListener('pointerdown', onFirstGesture, { passive: true });
+      window.addEventListener('keydown', onFirstGesture, { passive: true });
+      musicBtn?.addEventListener('click', onMusicClick);
 
       const magneticCta = document.getElementById('magneticCta') as HTMLElement | null;
       const pointer = { x: 0.5, y: 0.5, tx: 0.5, ty: 0.5, vx: 0, vy: 0, energy: 0 };
@@ -110,6 +229,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
           uniform float u_time;
           uniform vec2 u_mouse;
           uniform float u_energy;
+          uniform float u_audio;
 
           float hash(vec2 p) {
             return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
@@ -144,7 +264,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
             float t = u_time * 0.12;
             float distMouse = length(p - m);
-            float ripple = exp(-distMouse * 2.3) * (0.24 + u_energy * 0.35);
+            float ripple = exp(-distMouse * 2.3) * (0.24 + u_energy * 0.35 + u_audio * 0.25);
 
             vec2 q = vec2(
               fbm(p * 1.35 + vec2(t * 0.65, -t * 0.35) + ripple * (p - m)),
@@ -158,7 +278,6 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
             float f = fbm(p * 1.45 + 2.35 * r);
 
-            // Deep obsidian -> silky smoke -> subtle iridescent steel & crimson edge light
             vec3 col = vec3(0.027, 0.027, 0.035);
             col = mix(col, vec3(0.11, 0.115, 0.145), smoothstep(0.24, 0.78, f));
             col = mix(col, vec3(0.24, 0.25, 0.31), smoothstep(0.62, 0.94, f * r.y * 1.45));
@@ -166,10 +285,9 @@ import BaseLayout from '../layouts/BaseLayout.astro';
             float ribbon = smoothstep(0.66, 0.94, f * length(q) * 1.3);
             vec3 crimson = vec3(0.94, 0.23, 0.31);
             vec3 silver = vec3(0.75, 0.82, 0.95);
-            col += mix(silver, crimson, smoothstep(0.25, 0.85, r.x)) * ribbon * (0.38 + ripple * 0.9);
+            col += mix(silver, crimson, smoothstep(0.25, 0.85, r.x)) * ribbon * (0.38 + ripple * 0.9 + u_audio * 0.45);
 
-            // Subtle interactive light bloom at cursor
-            col += mix(vec3(0.85, 0.24, 0.32), vec3(0.55, 0.65, 0.9), 0.35) * exp(-distMouse * 3.6) * (0.14 + u_energy * 0.18);
+            col += mix(vec3(0.85, 0.24, 0.32), vec3(0.55, 0.65, 0.9), 0.35) * exp(-distMouse * 3.6) * (0.14 + u_energy * 0.18 + u_audio * 0.14);
 
             gl_FragColor = vec4(col, 1.0);
           }
@@ -199,17 +317,27 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         const uTime = gl.getUniformLocation(prog, 'u_time');
         const uMouse = gl.getUniformLocation(prog, 'u_mouse');
         const uEnergy = gl.getUniformLocation(prog, 'u_energy');
+        const uAudio = gl.getUniformLocation(prog, 'u_audio');
 
+        let smoothBass = 0;
         const start = performance.now();
         const draw = (now: number) => {
           pointer.x += (pointer.tx - pointer.x) * 0.065;
           pointer.y += (pointer.ty - pointer.y) * 0.065;
           pointer.energy *= 0.93;
 
+          let bass = 0;
+          if (audioPlaying && analyser && freqData) {
+            analyser.getByteFrequencyData(freqData);
+            bass = (freqData[0] + freqData[1] + freqData[2] + freqData[3]) / (4 * 255);
+          }
+          smoothBass += (bass - smoothBass) * 0.14;
+
           gl.uniform2f(uRes, canvas.width, canvas.height);
           gl.uniform1f(uTime, reducedMotion ? 2.0 : (now - start) * 0.001);
           gl.uniform2f(uMouse, pointer.x, pointer.y);
           gl.uniform1f(uEnergy, pointer.energy);
+          gl.uniform1f(uAudio, smoothBass);
           gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 
           if (!reducedMotion) {
@@ -221,8 +349,13 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
       cleanupSplash = () => {
         cancelAnimationFrame(rafId);
+        stopMusic();
         window.removeEventListener('pointermove', onPointerMove);
+        window.removeEventListener('pointerdown', onFirstGesture);
+        window.removeEventListener('keydown', onFirstGesture);
         window.removeEventListener('resize', resize);
+        musicBtn?.removeEventListener('click', onMusicClick);
+        audioCtx?.close().catch(() => {});
       };
     }
 
